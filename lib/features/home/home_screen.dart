@@ -67,13 +67,19 @@ class HomeScreen extends StatelessWidget {
             MenuButton(
               label: 'Pokédex',
               icon: Icons.menu_book,
-              onTap: () => Get.toNamed(AppRoutes.pokedex),
+              onTap: () async {
+                await Get.toNamed(AppRoutes.pokedex);
+                service.refreshStats();
+              },
             ),
             const SizedBox(height: 16),
             MenuButton(
               label: 'Registrar Pokémon',
               icon: Icons.add_circle_outline,
-              onTap: () => Get.toNamed(AppRoutes.pokemonSelector),
+              onTap: () async {
+                await Get.toNamed(AppRoutes.pokemonSelector);
+                service.refreshStats();
+              },
             ),
           ],
         ),

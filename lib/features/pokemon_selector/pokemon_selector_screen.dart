@@ -29,6 +29,8 @@ class PokemonSelectorScreen extends StatelessWidget {
         }
 
         final groups = service.pokemonByGeneration;
+        // Read mode here so this Obx reacts to mode changes
+        final isShiny = service.mode.value == 1;
 
         return Column(
           children: [
@@ -66,12 +68,12 @@ class PokemonSelectorScreen extends StatelessWidget {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final pokemon = entry.value[index];
-                          return SelectablePokemonTile(
+                          return Obx(() => SelectablePokemonTile(
                             pokemon: pokemon,
                             isSelected: service.isSelected(pokemon.id),
-                            isShiny: service.mode.value == 1,
+                            isShiny: isShiny,
                             onTap: () => service.togglePokemon(pokemon.id),
-                          );
+                          ));
                         },
                         childCount: entry.value.length,
                       ),
