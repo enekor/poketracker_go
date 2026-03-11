@@ -14,76 +14,209 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final service = Get.put(HomeService());
     final themeController = Get.find<ThemeController>();
+    final theme = Theme.of(context);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('PokéTracker GO'),
-        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'PokéTracker GO',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
         actions: [
           Obx(
             () => IconButton(
               icon: Icon(
                 themeController.isDarkMode.value
-                    ? Icons.light_mode
-                    : Icons.dark_mode,
+                    ? Icons.light_mode_rounded
+                    : Icons.dark_mode_rounded,
+                color: theme.colorScheme.onSurface,
               ),
               onPressed: themeController.toggleTheme,
             ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            // Stats cards
-            Obx(
-              () => Row(
+      body: Stack(
+        children: [
+          const PokeballBackground(),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: StatCard(
-                      label: 'Normal',
-                      count: service.totalOwned.value,
-                      total: service.totalPokemon,
-                      icon: Icons.catching_pokemon,
+                  Text(
+                    '¡Hola, Entrenador!',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: StatCard(
-                      label: 'Shiny',
-                      count: service.totalShiny.value,
-                      total: service.totalPokemon,
-                      icon: Icons.auto_awesome,
-                      iconColor: Theme.of(context).colorScheme.secondary,
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tu progreso actual en la Pokédex.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
+                  const SizedBox(height: 32),
+
+                  // Main Progress Card
+                  Obx(
+                    () => GlassCard(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildStatItem(
+                                  context,
+                                  'NORMAL',
+                                  service.totalOwned.value,
+                                  service.totalPokemon,
+                                  Icons.catching_pokemon,
+                                  theme.colorScheme.primary,
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.1),
+                                ),
+                                _buildStatItem(
+                                  context,
+                                  'SHINY',
+                                  service.totalShiny.value,
+                                  service.totalPokemon,
+                                  Icons.auto_awesome,
+                                  theme.colorScheme.secondary,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: LinearProgressIndicator(
+                                value:
+                                    service.totalOwned.value /
+                                    service.totalPokemon,
+                                minHeight: 12,
+                                backgroundColor: theme.colorScheme.onSurface
+                                    .withOpacity(0.05),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                  Text(
+                    'ACCESO RÁPIDO',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Navigation Hub
+                  Row(
+                    children: [
+                      Expanded(
+                        child: HubTile(
+                          title: 'Pokédex',
+                          subtitle: 'Ver colección',
+                          icon: Icons.menu_book_rounded,
+                          color: theme.colorScheme.primary,
+                          onTap: () async {
+                            await Get.toNamed(AppRoutes.pokedex);
+                            service.refreshStats();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: HubTile(
+                          title: 'Capturas',
+                          subtitle: 'Registrar nuevos',
+                          icon: Icons.add_task_rounded,
+                          color: theme.colorScheme.secondary,
+                          onTap: () async {
+                            await Get.toNamed(AppRoutes.pokemonSelector);
+                            service.refreshStats();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  /*const SizedBox(height: 16),
+                  HubTile(
+                    title: 'Configuración',
+                    subtitle: 'Ajustes y personalización',
+                    icon: Icons.settings_outlined,
+                    color: Colors.grey,
+                    onTap: () {
+                      // Placeholder for settings
+                    },
+                  )*/
                 ],
               ),
             ),
-            const SizedBox(height: 48),
-            // Navigation buttons
-            MenuButton(
-              label: 'Pokédex',
-              icon: Icons.menu_book,
-              onTap: () async {
-                await Get.toNamed(AppRoutes.pokedex);
-                service.refreshStats();
-              },
-            ),
-            const SizedBox(height: 16),
-            MenuButton(
-              label: 'Registrar Pokémon',
-              icon: Icons.add_circle_outline,
-              onTap: () async {
-                await Get.toNamed(AppRoutes.pokemonSelector);
-                service.refreshStats();
-              },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+    BuildContext context,
+    String label,
+    int count,
+    int total,
+    IconData icon,
+    Color color,
+  ) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                letterSpacing: 1,
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          '$count / $total',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     );
   }
 }

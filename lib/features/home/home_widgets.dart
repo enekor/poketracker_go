@@ -1,103 +1,121 @@
-// lib/features/home/home_widgets.dart
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class StatCard extends StatelessWidget {
-  final String label;
-  final int count;
-  final int total;
-  final IconData icon;
-  final Color? iconColor;
-
-  const StatCard({
-    super.key,
-    required this.label,
-    required this.count,
-    required this.total,
-    required this.icon,
-    this.iconColor,
-  });
+class PokeballBackground extends StatelessWidget {
+  const PokeballBackground({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final color = theme.brightness == Brightness.dark
+        ? Colors.white.withOpacity(0.03)
+        : theme.colorScheme.primary.withOpacity(0.03);
 
-    return Card(
-      elevation: isDark ? 0 : 4,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    theme.colorScheme.surface,
-                    theme.colorScheme.surface.withOpacity(0.8),
-                  ]
-                : [
-                    theme.colorScheme.surface,
-                    theme.colorScheme.primary.withOpacity(0.03),
-                  ],
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: (iconColor ?? theme.colorScheme.primary).withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 28,
-                color: iconColor ?? theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '$count / $total',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+    return Positioned(
+      top: -100,
+      right: -100,
+      child: IgnorePointer(
+        child: CustomPaint(
+          size: const Size(400, 400),
+          painter: _PokeballPainter(color: color),
         ),
       ),
     );
   }
 }
 
-class MenuButton extends StatefulWidget {
-  final String label;
+class _PokeballPainter extends CustomPainter {
+  final Color color;
+  _PokeballPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 40;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    canvas.drawCircle(center, radius, paint);
+    canvas.drawLine(Offset(0, center.dy), Offset(size.width, center.dy), paint);
+
+    final centerPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, 60, centerPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final double borderRadius;
+
+  const GlassCard({super.key, required this.child, this.borderRadius = 24});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.white.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : theme.colorScheme.primary.withOpacity(0.15),
+              width: 1.5,
+            ),
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class HubTile extends StatefulWidget {
+  final String title;
+  final String subtitle;
   final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
-  const MenuButton({
+  const HubTile({
     super.key,
-    required this.label,
+    required this.title,
+    required this.subtitle,
     required this.icon,
+    required this.color,
     required this.onTap,
   });
 
   @override
-  State<MenuButton> createState() => _MenuButtonState();
+  State<HubTile> createState() => _HubTileState();
 }
 
-class _MenuButtonState extends State<MenuButton> with SingleTickerProviderStateMixin {
+class _HubTileState extends State<HubTile> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -106,11 +124,12 @@ class _MenuButtonState extends State<MenuButton> with SingleTickerProviderStateM
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 150),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.96,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -123,38 +142,73 @@ class _MenuButtonState extends State<MenuButton> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: widget.onTap,
-          onFocusChange: (focus) => focus ? _controller.forward() : _controller.reverse(),
-          icon: Icon(widget.icon, size: 24),
-          label: Text(
-            widget.label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: widget.onTap,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          height: 160,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: theme.brightness == Brightness.light
+                ? Border.all(color: widget.color.withOpacity(0.08), width: 1.5)
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withOpacity(
+                  theme.brightness == Brightness.dark ? 0.15 : 0.08,
+                ),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -15,
+                bottom: -15,
+                child: Icon(
+                  widget.icon,
+                  size: 100,
+                  color: widget.color.withOpacity(0.08),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: widget.color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(widget.icon, color: widget.color, size: 28),
+                    ),
+                    const Spacer(),
+                    Text(
+                      widget.title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      widget.subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
