@@ -6,8 +6,10 @@ import 'package:poketracker_go/app/theme/app_colors.dart';
 class AppTheme {
   static ThemeData light = ThemeData(
     brightness: Brightness.light,
+    useMaterial3: true,
     primaryColor: AppColors.primaryLight,
-    colorScheme: const ColorScheme.light(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.primaryLight,
       primary: AppColors.primaryLight,
       secondary: AppColors.secondaryLight,
       surface: AppColors.surfaceLight,
@@ -18,23 +20,38 @@ class AppTheme {
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.primaryLight,
       foregroundColor: Colors.white,
-      elevation: 2,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: AppColors.secondaryLight,
       foregroundColor: Colors.black,
+      elevation: 4,
     ),
     cardTheme: CardThemeData(
       color: AppColors.surfaceLight,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    chipTheme: ChipThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      side: BorderSide.none,
     ),
   );
 
   static ThemeData dark = ThemeData(
     brightness: Brightness.dark,
+    useMaterial3: true,
     primaryColor: AppColors.primaryDark,
-    colorScheme: const ColorScheme.dark(
+    colorScheme: ColorScheme.fromSeed(
+      brightness: Brightness.dark,
+      seedColor: AppColors.primaryDark,
       primary: AppColors.primaryDark,
       secondary: AppColors.secondaryDark,
       surface: AppColors.surfaceDark,
@@ -43,21 +60,32 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: AppColors.backgroundDark,
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.primaryDark,
-      foregroundColor: Colors.white,
-      elevation: 4,
+      backgroundColor: AppColors.surfaceDark,
+      foregroundColor: AppColors.onSurfaceDark,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: AppColors.onSurfaceDark,
+      ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: AppColors.secondaryDark,
       foregroundColor: Colors.black,
+      elevation: 4,
     ),
     cardTheme: CardThemeData(
       color: AppColors.surfaceDark,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.white.withOpacity(0.08)),
       ),
+    ),
+    chipTheme: ChipThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      side: BorderSide(color: Colors.white.withOpacity(0.08)),
     ),
   );
 }
