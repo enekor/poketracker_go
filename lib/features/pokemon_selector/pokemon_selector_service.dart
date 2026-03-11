@@ -101,6 +101,7 @@ class PokemonSelectorService extends GetxController {
 
   void togglePokemon(int pokemonId) {
     selection[pokemonId] = !(selection[pokemonId] ?? false);
+    selection.refresh();
   }
 
   bool isSelected(int pokemonId) {

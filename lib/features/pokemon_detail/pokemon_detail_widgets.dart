@@ -80,33 +80,57 @@ class TypeChip extends StatelessWidget {
   }
 }
 
-/// Ownership indicator badges.
+/// Ownership indicator badges (tappable when owned to switch sprite).
 class OwnershipBadge extends StatelessWidget {
   final String label;
   final bool owned;
+  final bool active;
+  final VoidCallback? onTap;
 
-  const OwnershipBadge({super.key, required this.label, required this.owned});
+  const OwnershipBadge({
+    super.key,
+    required this.label,
+    required this.owned,
+    this.active = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          owned ? Icons.check_circle : Icons.cancel,
-          color: owned ? Colors.green : theme.colorScheme.onSurfaceVariant,
-          size: 20,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: active
+              ? Border.all(color: theme.colorScheme.secondary, width: 2)
+              : null,
+          color: active
+              ? theme.colorScheme.secondary.withValues(alpha: 0.1)
+              : Colors.transparent,
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontSize: 14,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              owned ? Icons.check_circle : Icons.cancel,
+              color: owned ? Colors.green : theme.colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: 14,
+                fontWeight: active ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

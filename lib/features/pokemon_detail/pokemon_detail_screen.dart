@@ -32,24 +32,45 @@ class PokemonDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              // Sprite viewer (tap to toggle normal/shiny)
+              // Sprite viewer
               Obx(
-                () => PokemonSpriteViewer(
-                  normalUrl: pokemon.spriteUrl,
-                  shinyUrl: pokemon.spriteShinyUrl,
-                  showShiny: showShiny.value,
-                  onToggle: () => showShiny.value = !showShiny.value,
-                ),
+                () {
+                  final canToggleToShiny = service.hasShiny.value;
+                  final canToggleToNormal = service.hasNormal.value;
+
+                  return PokemonSpriteViewer(
+                    normalUrl: pokemon.spriteUrl,
+                    shinyUrl: pokemon.spriteShinyUrl,
+                    showShiny: showShiny.value,
+                    onToggle: () {
+                      if (showShiny.value && canToggleToNormal) {
+                        showShiny.value = false;
+                      } else if (!showShiny.value && canToggleToShiny) {
+                        showShiny.value = true;
+                      }
+                    },
+                  );
+                },
               ),
               const SizedBox(height: 8),
               Obx(
-                () => Text(
-                  showShiny.value ? 'Shiny (toca para cambiar)' : 'Normal (toca para cambiar)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                () {
+                  final canSwitch = showShiny.value
+                      ? service.hasNormal.value
+                      : service.hasShiny.value;
+                  final label = showShiny.value ? 'Shiny' : 'Normal';
+                  final hint = canSwitch
+                      ? '$label (toca para cambiar)'
+                      : '$label';
+
+                  return Text(
+                    hint,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 16),
               // Name and number
@@ -67,13 +88,27 @@ class PokemonDetailScreen extends StatelessWidget {
                   children: pokemon.types.map((t) => TypeChip(type: t)).toList(),
                 ),
               const SizedBox(height: 24),
-              // Ownership badges
+              // Ownership badges (tappable to switch sprite)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  OwnershipBadge(label: 'Normal', owned: service.hasNormal.value),
+                  OwnershipBadge(
+                    label: 'Normal',
+                    owned: service.hasNormal.value,
+                    active: !showShiny.value,
+                    onTap: service.hasNormal.value
+                        ? () => showShiny.value = false
+                        : null,
+                  ),
                   const SizedBox(width: 24),
-                  OwnershipBadge(label: 'Shiny', owned: service.hasShiny.value),
+                  OwnershipBadge(
+                    label: 'Shiny',
+                    owned: service.hasShiny.value,
+                    active: showShiny.value,
+                    onTap: service.hasShiny.value
+                        ? () => showShiny.value = true
+                        : null,
+                  ),
                 ],
               ),
             ],
