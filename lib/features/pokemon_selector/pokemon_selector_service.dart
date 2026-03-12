@@ -17,6 +17,7 @@ class PokemonSelectorService extends GetxController {
   final RxInt mode = 0.obs; // 0 = Normal, 1 = Shiny
   final RxString searchQuery = ''.obs;
   final RxInt selectedGeneration = 0.obs;
+  final RxInt ownershipFilter = 0.obs; // 0 = all, 1 = owned, 2 = not owned
 
   /// Temporary selection state: pokemonId -> selected
   final RxMap<int, bool> selection = <int, bool>{}.obs;
@@ -52,6 +53,12 @@ class PokemonSelectorService extends GetxController {
       } else {
         list = list.where((p) => p.name.toLowerCase().contains(q)).toList();
       }
+    }
+
+    if (ownershipFilter.value == 1) {
+      list = list.where((p) => selection[p.id] == true).toList();
+    } else if (ownershipFilter.value == 2) {
+      list = list.where((p) => selection[p.id] != true).toList();
     }
 
     return list;
@@ -133,6 +140,10 @@ class PokemonSelectorService extends GetxController {
 
   void selectGeneration(int gen) {
     selectedGeneration.value = gen;
+  }
+
+  void selectOwnershipFilter(int filter) {
+    ownershipFilter.value = filter;
   }
 
   /// Save all changes to Hive.
