@@ -26,8 +26,65 @@ class PokemonSpriteViewer extends StatelessWidget {
         imageUrl: spriteUrl,
         fit: BoxFit.contain,
         filterQuality: usePixelArt ? FilterQuality.none : FilterQuality.low,
-        placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
-        errorWidget: (_, __, ___) => const Icon(Icons.error_outline, size: 64),
+        placeholder: (_, __) =>
+            const Center(child: CircularProgressIndicator()),
+        errorWidget: (_, __, ___) =>
+            const Icon(Icons.error_outline, size: 64),
+      ),
+    );
+  }
+}
+
+/// Tappable gender selector: shows ♂/♀ and toggles on tap.
+class GenderSelector extends StatelessWidget {
+  final bool isFemale;
+  final VoidCallback onTap;
+
+  const GenderSelector({
+    super.key,
+    required this.isFemale,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _genderIcon('♂', !isFemale, Colors.blue, theme),
+          const SizedBox(width: 12),
+          _genderIcon('♀', isFemale, Colors.pink, theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _genderIcon(
+      String symbol, bool isActive, Color activeColor, ThemeData theme) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isActive
+            ? activeColor.withOpacity(0.15)
+            : theme.colorScheme.onSurface.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(20),
+        border: isActive
+            ? Border.all(color: activeColor.withOpacity(0.5), width: 1.5)
+            : null,
+      ),
+      child: Text(
+        symbol,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: isActive
+              ? activeColor
+              : theme.colorScheme.onSurface.withOpacity(0.3),
+        ),
       ),
     );
   }
@@ -76,43 +133,101 @@ class TypeChip extends StatelessWidget {
   }
 }
 
-/// Ownership indicator badge.
-class OwnershipBadge extends StatelessWidget {
-  final String label;
-  final bool owned;
+/// Normal / Shiny toggle — only unlocked options are tappable.
+class OwnershipToggle extends StatelessWidget {
+  final bool hasNormal;
+  final bool hasShiny;
+  final bool showShiny;
+  final VoidCallback? onNormal;
+  final VoidCallback? onShiny;
 
-  const OwnershipBadge({
+  const OwnershipToggle({
     super.key,
-    required this.label,
-    required this.owned,
+    required this.hasNormal,
+    required this.hasShiny,
+    required this.showShiny,
+    this.onNormal,
+    this.onShiny,
   });
 
   @override
   Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildChip(
+          context,
+          label: 'Normal',
+          isActive: !showShiny,
+          isLocked: !hasNormal,
+          onTap: onNormal,
+        ),
+        const SizedBox(width: 12),
+        _buildChip(
+          context,
+          label: 'Shiny',
+          icon: Icons.auto_awesome,
+          isActive: showShiny,
+          isLocked: !hasShiny,
+          onTap: onShiny,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChip(
+    BuildContext context, {
+    required String label,
+    IconData? icon,
+    required bool isActive,
+    required bool isLocked,
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: theme.colorScheme.onSurface.withOpacity(0.04),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            owned ? Icons.check_circle : Icons.cancel,
-            color: owned ? Colors.green : theme.colorScheme.onSurfaceVariant,
-            size: 20,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: 14,
+
+    final Color bgColor;
+    final Color fgColor;
+
+    if (isLocked) {
+      bgColor = theme.colorScheme.onSurface.withOpacity(0.04);
+      fgColor = theme.colorScheme.onSurface.withOpacity(0.25);
+    } else if (isActive) {
+      bgColor = theme.colorScheme.primary;
+      fgColor = Colors.white;
+    } else {
+      bgColor = theme.colorScheme.onSurface.withOpacity(0.06);
+      fgColor = theme.colorScheme.onSurface.withOpacity(0.6);
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isLocked) ...[
+              Icon(Icons.lock_outline, size: 14, color: fgColor),
+              const SizedBox(width: 6),
+            ] else if (icon != null) ...[
+              Icon(icon, size: 14, color: fgColor),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                color: fgColor,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

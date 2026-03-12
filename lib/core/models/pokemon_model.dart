@@ -10,6 +10,8 @@ class PokemonModel {
   final String spriteShinyUrl;
   final String? spriteFemaleUrl;
   final String? spriteShinyFemaleUrl;
+  final String? spriteHomeFemaleUrl;
+  final String? spriteHomeShinyFemaleUrl;
   final List<String> types;
   final int generation;
 
@@ -20,11 +22,14 @@ class PokemonModel {
     required this.spriteShinyUrl,
     this.spriteFemaleUrl,
     this.spriteShinyFemaleUrl,
+    this.spriteHomeFemaleUrl,
+    this.spriteHomeShinyFemaleUrl,
     required this.types,
     required this.generation,
   });
 
-  bool get hasFemaleSprite => spriteFemaleUrl != null;
+  bool get hasFemaleSprite =>
+      spriteFemaleUrl != null || spriteHomeFemaleUrl != null;
 
   /// Creates a PokemonModel from a PokeAPI /pokemon/{id} JSON response.
   factory PokemonModel.fromPokeApi(Map<String, dynamic> json) {
@@ -37,6 +42,11 @@ class PokemonModel {
     final frontFemale = sprites?['front_female'] as String?;
     final frontShinyFemale = sprites?['front_shiny_female'] as String?;
 
+    final other = sprites?['other'] as Map<String, dynamic>?;
+    final home = other?['home'] as Map<String, dynamic>?;
+    final homeFemale = home?['front_female'] as String?;
+    final homeShinyFemale = home?['front_shiny_female'] as String?;
+
     return PokemonModel(
       id: id,
       name: json['name'] as String,
@@ -44,6 +54,8 @@ class PokemonModel {
       spriteShinyUrl: ApiConstants.spriteShinyUrl(id),
       spriteFemaleUrl: frontFemale,
       spriteShinyFemaleUrl: frontShinyFemale,
+      spriteHomeFemaleUrl: homeFemale,
+      spriteHomeShinyFemaleUrl: homeShinyFemale,
       types: types,
       generation: getGeneration(id),
     );

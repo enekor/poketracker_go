@@ -32,168 +32,85 @@ class PokemonDetailScreen extends StatelessWidget {
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              // Sprite viewer
-              Obx(
-                () {
-                  final spriteCtrl = Get.find<SpriteStyleController>();
-                  final isPixelArt = spriteCtrl.usePixelArt.value;
-                  String spriteUrl;
+          child: Obx(() {
+            final spriteCtrl = Get.find<SpriteStyleController>();
+            final isPixelArt = spriteCtrl.usePixelArt.value;
+            final hasGender = service.hasFemaleSprite.value;
 
-                  if (isPixelArt && showFemale.value) {
-                    // Female pixel art sprites (from API)
-                    if (showShiny.value) {
-                      spriteUrl = pokemon.spriteShinyFemaleUrl ?? pokemon.spriteShinyUrl;
-                    } else {
-                      spriteUrl = pokemon.spriteFemaleUrl ?? pokemon.spriteUrl;
-                    }
-                  } else {
-                    // Standard or 3D sprites (no female variant in Home)
-                    spriteUrl = showShiny.value
-                        ? spriteCtrl.spriteShinyUrl(pokemon.id)
-                        : spriteCtrl.spriteUrl(pokemon.id);
-                  }
+            // Compute sprite URL
+            String spriteUrl;
+            if (showFemale.value) {
+              if (isPixelArt) {
+                spriteUrl = showShiny.value
+                    ? (pokemon.spriteShinyFemaleUrl ?? pokemon.spriteShinyUrl)
+                    : (pokemon.spriteFemaleUrl ?? pokemon.spriteUrl);
+              } else {
+                spriteUrl = showShiny.value
+                    ? (pokemon.spriteHomeShinyFemaleUrl ??
+                        spriteCtrl.spriteShinyUrl(pokemon.id))
+                    : (pokemon.spriteHomeFemaleUrl ??
+                        spriteCtrl.spriteUrl(pokemon.id));
+              }
+            } else {
+              spriteUrl = showShiny.value
+                  ? spriteCtrl.spriteShinyUrl(pokemon.id)
+                  : spriteCtrl.spriteUrl(pokemon.id);
+            }
 
-                  return PokemonSpriteViewer(
-                    spriteUrl: spriteUrl,
-                    usePixelArt: isPixelArt,
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              // Shiny toggle + Gender toggle
-              Obx(
-                () {
-                  final theme = Theme.of(context);
-                  final spriteCtrl = Get.find<SpriteStyleController>();
-                  final showGender = spriteCtrl.usePixelArt.value &&
-                      service.hasFemaleSprite.value;
-
-                  // Reset female when switching to 3D
-                  if (!spriteCtrl.usePixelArt.value && showFemale.value) {
-                    showFemale.value = false;
-                  }
-
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Normal / Shiny toggle
-                      _buildToggleChip(
-                        context,
-                        label: 'Normal',
-                        isActive: !showShiny.value,
-                        onTap: () => showShiny.value = false,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildToggleChip(
-                        context,
-                        label: 'Shiny',
-                        icon: Icons.auto_awesome,
-                        isActive: showShiny.value,
-                        onTap: () => showShiny.value = true,
-                      ),
-                      if (showGender) ...[
-                        const SizedBox(width: 16),
-                        Container(
-                          width: 1,
-                          height: 28,
-                          color: theme.colorScheme.onSurface.withOpacity(0.15),
-                        ),
-                        const SizedBox(width: 16),
-                        _buildToggleChip(
-                          context,
-                          label: '♂',
-                          isActive: !showFemale.value,
-                          onTap: () => showFemale.value = false,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildToggleChip(
-                          context,
-                          label: '♀',
-                          isActive: showFemale.value,
-                          onTap: () => showFemale.value = true,
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              // Name and number
-              Text(
-                '${pokemon.formattedId} — ${service.capitalizedName()}',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+            return Column(
+              children: [
+                // 1. Sprite
+                PokemonSpriteViewer(
+                  spriteUrl: spriteUrl,
+                  usePixelArt: isPixelArt,
                 ),
-              ),
-              const SizedBox(height: 12),
-              // Types
-              if (pokemon.types.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  children: pokemon.types.map((t) => TypeChip(type: t)).toList(),
-                ),
-              const SizedBox(height: 24),
-              // Ownership badges
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  OwnershipBadge(
-                    label: 'Normal',
-                    owned: service.hasNormal.value,
-                  ),
-                  const SizedBox(width: 24),
-                  OwnershipBadge(
-                    label: 'Shiny',
-                    owned: service.hasShiny.value,
+
+                // 2. Gender selector (only if gender difference exists)
+                if (hasGender) ...[
+                  const SizedBox(height: 12),
+                  GenderSelector(
+                    isFemale: showFemale.value,
+                    onTap: () => showFemale.value = !showFemale.value,
                   ),
                 ],
-              ),
-            ],
-          ),
+
+                // 3. Pokédex number — Name
+                const SizedBox(height: 16),
+                Text(
+                  '${pokemon.formattedId} — ${service.capitalizedName()}',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                // 4. Types
+                if (pokemon.types.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    children:
+                        pokemon.types.map((t) => TypeChip(type: t)).toList(),
+                  ),
+                ],
+
+                // 5. Normal / Shiny selector (only unlocked ones are selectable)
+                const SizedBox(height: 24),
+                OwnershipToggle(
+                  hasNormal: service.hasNormal.value,
+                  hasShiny: service.hasShiny.value,
+                  showShiny: showShiny.value,
+                  onNormal: service.hasNormal.value
+                      ? () => showShiny.value = false
+                      : null,
+                  onShiny: service.hasShiny.value
+                      ? () => showShiny.value = true
+                      : null,
+                ),
+              ],
+            );
+          }),
         );
       }),
-    );
-  }
-
-  Widget _buildToggleChip(
-    BuildContext context, {
-    required String label,
-    IconData? icon,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive
-              ? theme.colorScheme.primary
-              : theme.colorScheme.onSurface.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 14, color: isActive ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.6)),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
