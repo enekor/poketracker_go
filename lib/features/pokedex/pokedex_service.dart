@@ -19,6 +19,7 @@ class PokedexService extends GetxController {
   final RxInt currentPage = 0.obs; // 0 = Normal, 1 = Shiny
   final RxString searchQuery = ''.obs;
   final RxInt selectedGeneration = 0.obs; // 0 = all
+  final RxInt ownershipFilter = 0.obs; // 0 = all, 1 = owned, 2 = not owned
 
   /// Scroll controllers for normal and shiny grids.
   final ScrollController normalScrollController = ScrollController();
@@ -56,6 +57,19 @@ class PokedexService extends GetxController {
       } else {
         list = list.where((p) => p.name.toLowerCase().contains(q)).toList();
       }
+    }
+
+    // Ownership filter (context-aware: normal vs shiny page)
+    if (ownershipFilter.value == 1) {
+      // Only owned
+      list = list.where((p) {
+        return currentPage.value == 1 ? hasShiny(p.id) : hasNormal(p.id);
+      }).toList();
+    } else if (ownershipFilter.value == 2) {
+      // Only not owned
+      list = list.where((p) {
+        return currentPage.value == 1 ? !hasShiny(p.id) : !hasNormal(p.id);
+      }).toList();
     }
 
     return list;
@@ -116,6 +130,10 @@ class PokedexService extends GetxController {
 
   void selectGeneration(int gen) {
     selectedGeneration.value = gen;
+  }
+
+  void selectOwnershipFilter(int filter) {
+    ownershipFilter.value = filter;
   }
 
   bool hasNormal(int pokemonId) {

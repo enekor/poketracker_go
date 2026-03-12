@@ -48,6 +48,14 @@ class PokedexScreen extends StatelessWidget {
                 onSelected: service.selectGeneration,
               ),
             ),
+            // Ownership filter
+            Padding(
+              padding: const EdgeInsets.only(top: 0),
+              child: OwnershipFilterBar(
+                selectedFilter: service.ownershipFilter.value,
+                onSelected: service.selectOwnershipFilter,
+              ),
+            ),
             // Search bar
             PokemonSearchBar(onChanged: service.onSearchChanged),
             // Grid PageView

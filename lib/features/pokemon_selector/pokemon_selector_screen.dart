@@ -18,11 +18,43 @@ class PokemonSelectorScreen extends StatelessWidget {
         title: const Text('Registrar Pokémon'),
         centerTitle: true,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: service.saveSelection,
-        icon: const Icon(Icons.save),
-        label: const Text('Guardar'),
-      ),
+      bottomNavigationBar: Obx(() {
+        final hasChanges = service.hasChanges;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          height: hasChanges ? 64 : 0,
+          child: hasChanges
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    border: Border(
+                      top: BorderSide(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+                      ),
+                    ),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: service.saveSelection,
+                        icon: const Icon(Icons.save_rounded, size: 20),
+                        label: const Text('Guardar cambios'),
+                        style: FilledButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        );
+      }),
       body: Obx(() {
         if (service.isLoading.value) {
           return const Center(child: CircularProgressIndicator());

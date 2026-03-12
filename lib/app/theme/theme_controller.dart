@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:poketracker_go/app/theme/app_theme.dart';
-import 'package:poketracker_go/core/models/settings_model.dart';
 import 'package:poketracker_go/core/services/hive_service.dart';
 
 class ThemeController extends GetxController {
@@ -21,7 +20,9 @@ class ThemeController extends GetxController {
   void toggleTheme() {
     isDarkMode.value = !isDarkMode.value;
     _applyTheme();
-    _hiveService.saveSettings(SettingsModel(isDarkMode: isDarkMode.value));
+    final settings = _hiveService.getSettings();
+    settings.isDarkMode = isDarkMode.value;
+    _hiveService.saveSettings(settings);
   }
 
   void _applyTheme() {

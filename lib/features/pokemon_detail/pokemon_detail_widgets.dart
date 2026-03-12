@@ -3,35 +3,31 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-/// Large sprite display with normal/shiny toggle.
+/// Large sprite display.
 class PokemonSpriteViewer extends StatelessWidget {
-  final String normalUrl;
-  final String shinyUrl;
-  final bool showShiny;
-  final VoidCallback onToggle;
+  final String spriteUrl;
+  final bool usePixelArt;
 
   const PokemonSpriteViewer({
     super.key,
-    required this.normalUrl,
-    required this.shinyUrl,
-    required this.showShiny,
-    required this.onToggle,
+    required this.spriteUrl,
+    this.usePixelArt = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final url = showShiny ? shinyUrl : normalUrl;
-    return GestureDetector(
-      onTap: onToggle,
-      child: SizedBox(
-        height: 200,
-        width: 200,
-        child: CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.contain,
-          placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
-          errorWidget: (_, __, ___) => const Icon(Icons.error_outline, size: 64),
-        ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final spriteSize = screenWidth * 0.65;
+
+    return SizedBox(
+      height: spriteSize,
+      width: spriteSize,
+      child: CachedNetworkImage(
+        imageUrl: spriteUrl,
+        fit: BoxFit.contain,
+        filterQuality: usePixelArt ? FilterQuality.none : FilterQuality.low,
+        placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
+        errorWidget: (_, __, ___) => const Icon(Icons.error_outline, size: 64),
       ),
     );
   }
@@ -80,56 +76,43 @@ class TypeChip extends StatelessWidget {
   }
 }
 
-/// Ownership indicator badges (tappable when owned to switch sprite).
+/// Ownership indicator badge.
 class OwnershipBadge extends StatelessWidget {
   final String label;
   final bool owned;
-  final bool active;
-  final VoidCallback? onTap;
 
   const OwnershipBadge({
     super.key,
     required this.label,
     required this.owned,
-    this.active = false,
-    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: active
-              ? Border.all(color: theme.colorScheme.secondary, width: 2)
-              : null,
-          color: active
-              ? theme.colorScheme.secondary.withValues(alpha: 0.1)
-              : Colors.transparent,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              owned ? Icons.check_circle : Icons.cancel,
-              color: owned ? Colors.green : theme.colorScheme.onSurfaceVariant,
-              size: 20,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: theme.colorScheme.onSurface.withOpacity(0.04),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            owned ? Icons.check_circle : Icons.cancel,
+            color: owned ? Colors.green : theme.colorScheme.onSurfaceVariant,
+            size: 20,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: 14,
             ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: 14,
-                fontWeight: active ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

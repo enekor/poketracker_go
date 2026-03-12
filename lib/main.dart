@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:poketracker_go/app/routes/app_routes.dart';
 import 'package:poketracker_go/app/theme/app_theme.dart';
+import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
 import 'package:poketracker_go/app/theme/theme_controller.dart';
 import 'package:poketracker_go/core/services/api_service.dart';
 import 'package:poketracker_go/core/services/hive_service.dart';
@@ -19,6 +20,7 @@ void main() async {
   Get.put(hiveService);
   Get.put(ApiService());
   Get.put(ThemeController());
+  Get.put(SpriteStyleController());
 
   runApp(const PokeTrackerApp());
 }

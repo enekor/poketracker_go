@@ -21,6 +21,9 @@ class PokemonSelectorService extends GetxController {
   /// Temporary selection state: pokemonId -> selected
   final RxMap<int, bool> selection = <int, bool>{}.obs;
 
+  /// Original selection state to detect changes.
+  final Map<int, bool> _originalSelection = {};
+
   Timer? _debounce;
 
   List<MapEntry<int, List<PokemonModel>>> get pokemonByGeneration {
@@ -79,6 +82,16 @@ class PokemonSelectorService extends GetxController {
     }
   }
 
+  /// Whether the current selection differs from the saved state.
+  bool get hasChanges {
+    for (final entry in selection.entries) {
+      if (entry.value != (_originalSelection[entry.key] ?? false)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Initialize selection from current Hive data.
   void _initSelection() {
     final userData = _hiveService.getAllUserPokemon();
@@ -92,6 +105,9 @@ class PokemonSelectorService extends GetxController {
       }
     }
     selection.assignAll(map);
+    _originalSelection
+      ..clear()
+      ..addAll(map);
   }
 
   void toggleMode(int newMode) {
@@ -133,6 +149,10 @@ class PokemonSelectorService extends GetxController {
       ));
     }
     await _hiveService.saveAllUserPokemon(models);
+    _originalSelection
+      ..clear()
+      ..addAll(Map.from(selection));
+    selection.refresh();
     Get.snackbar('Guardado', 'Cambios guardados correctamente');
   }
 }

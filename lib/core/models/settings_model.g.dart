@@ -17,16 +17,19 @@ class SettingsModelAdapter extends TypeAdapter<SettingsModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return SettingsModel(
-      isDarkMode: fields[0] as bool,
+      isDarkMode: fields[0] as bool? ?? false,
+      usePixelArt: fields[1] as bool? ?? true,
     );
   }
 
   @override
   void write(BinaryWriter writer, SettingsModel obj) {
     writer
-      ..writeByte(1)
+      ..writeByte(2)
       ..writeByte(0)
-      ..write(obj.isDarkMode);
+      ..write(obj.isDarkMode)
+      ..writeByte(1)
+      ..write(obj.usePixelArt);
   }
 
   @override

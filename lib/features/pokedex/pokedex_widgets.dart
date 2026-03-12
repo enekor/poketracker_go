@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get/get.dart';
 import 'package:poketracker_go/app/theme/app_colors.dart';
+import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
 import 'package:poketracker_go/core/constants/pokemon_generations.dart';
 import 'package:poketracker_go/core/models/pokemon_model.dart';
 import 'package:poketracker_go/core/utils/image_utils.dart';
@@ -51,7 +53,10 @@ class _PokemonGridTileState extends State<PokemonGridTile> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final spriteUrl = widget.isShiny ? widget.pokemon.spriteShinyUrl : widget.pokemon.spriteUrl;
+    final spriteCtrl = Get.find<SpriteStyleController>();
+    final spriteUrl = widget.isShiny
+        ? spriteCtrl.spriteShinyUrl(widget.pokemon.id)
+        : spriteCtrl.spriteUrl(widget.pokemon.id);
 
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
@@ -216,6 +221,64 @@ class GenerationChipBar extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             child: ChoiceChip(
               label: Text(romanNumerals[index]),
+              selected: isActive,
+              onSelected: (_) => onSelected(index),
+              showCheckmark: false,
+              labelStyle: TextStyle(
+                color: isActive ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.7),
+                fontSize: 13,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              ),
+              selectedColor: theme.colorScheme.primary,
+              backgroundColor: theme.brightness == Brightness.dark
+                  ? theme.colorScheme.surface
+                  : Colors.white,
+              elevation: isActive ? 2 : 0,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Ownership filter chip bar (All / Owned / Not owned).
+class OwnershipFilterBar extends StatelessWidget {
+  final int selectedFilter;
+  final ValueChanged<int> onSelected;
+
+  const OwnershipFilterBar({
+    super.key,
+    required this.selectedFilter,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final labels = ['Todos', 'Capturados', 'Sin capturar'];
+    final icons = [Icons.apps_rounded, Icons.catching_pokemon, Icons.radio_button_unchecked];
+
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: labels.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final isActive = selectedFilter == index;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: ChoiceChip(
+              avatar: Icon(
+                icons[index],
+                size: 16,
+                color: isActive ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.5),
+              ),
+              label: Text(labels[index]),
               selected: isActive,
               onSelected: (_) => onSelected(index),
               showCheckmark: false,

@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:poketracker_go/app/routes/app_routes.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
 import 'package:poketracker_go/app/theme/theme_controller.dart';
 import 'package:poketracker_go/features/home/home_service.dart';
 import 'package:poketracker_go/features/home/home_widgets.dart';
@@ -14,6 +16,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final service = Get.put(HomeService());
     final themeController = Get.find<ThemeController>();
+    final spriteController = Get.find<SpriteStyleController>();
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -164,16 +167,33 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  /*const SizedBox(height: 16),
-                  HubTile(
-                    title: 'Configuración',
-                    subtitle: 'Ajustes y personalización',
-                    icon: Icons.settings_outlined,
-                    color: Colors.grey,
-                    onTap: () {
-                      // Placeholder for settings
-                    },
-                  )*/
+                  const SizedBox(height: 16),
+                  Obx(
+                    () => HubTile(
+                      title: spriteController.usePixelArt.value
+                          ? 'Pixel Art'
+                          : '3D Sprites',
+                      subtitle: 'Cambiar estilo',
+                      iconWidget: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CachedNetworkImage(
+                          imageUrl: spriteController.pikachuSpriteUrl,
+                          fit: BoxFit.contain,
+                          filterQuality: spriteController.usePixelArt.value
+                              ? FilterQuality.none
+                              : FilterQuality.low,
+                          placeholder: (_, __) => const SizedBox.shrink(),
+                          errorWidget: (_, __, ___) => const Icon(
+                            Icons.catching_pokemon,
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                      color: Colors.orange,
+                      onTap: spriteController.toggleStyle,
+                    ),
+                  ),
                 ],
               ),
             ),

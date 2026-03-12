@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
 import 'package:poketracker_go/features/pokemon_detail/pokemon_detail_service.dart';
 import 'package:poketracker_go/features/pokemon_detail/pokemon_detail_widgets.dart';
 
@@ -12,6 +13,7 @@ class PokemonDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final service = Get.put(PokemonDetailService());
     final showShiny = false.obs;
+    final showFemale = false.obs;
 
     return Scaffold(
       appBar: AppBar(
@@ -35,40 +37,85 @@ class PokemonDetailScreen extends StatelessWidget {
               // Sprite viewer
               Obx(
                 () {
-                  final canToggleToShiny = service.hasShiny.value;
-                  final canToggleToNormal = service.hasNormal.value;
+                  final spriteCtrl = Get.find<SpriteStyleController>();
+                  final isPixelArt = spriteCtrl.usePixelArt.value;
+                  String spriteUrl;
+
+                  if (isPixelArt && showFemale.value) {
+                    // Female pixel art sprites (from API)
+                    if (showShiny.value) {
+                      spriteUrl = pokemon.spriteShinyFemaleUrl ?? pokemon.spriteShinyUrl;
+                    } else {
+                      spriteUrl = pokemon.spriteFemaleUrl ?? pokemon.spriteUrl;
+                    }
+                  } else {
+                    // Standard or 3D sprites (no female variant in Home)
+                    spriteUrl = showShiny.value
+                        ? spriteCtrl.spriteShinyUrl(pokemon.id)
+                        : spriteCtrl.spriteUrl(pokemon.id);
+                  }
 
                   return PokemonSpriteViewer(
-                    normalUrl: pokemon.spriteUrl,
-                    shinyUrl: pokemon.spriteShinyUrl,
-                    showShiny: showShiny.value,
-                    onToggle: () {
-                      if (showShiny.value && canToggleToNormal) {
-                        showShiny.value = false;
-                      } else if (!showShiny.value && canToggleToShiny) {
-                        showShiny.value = true;
-                      }
-                    },
+                    spriteUrl: spriteUrl,
+                    usePixelArt: isPixelArt,
                   );
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+              // Shiny toggle + Gender toggle
               Obx(
                 () {
-                  final canSwitch = showShiny.value
-                      ? service.hasNormal.value
-                      : service.hasShiny.value;
-                  final label = showShiny.value ? 'Shiny' : 'Normal';
-                  final hint = canSwitch
-                      ? '$label (toca para cambiar)'
-                      : '$label';
+                  final theme = Theme.of(context);
+                  final spriteCtrl = Get.find<SpriteStyleController>();
+                  final showGender = spriteCtrl.usePixelArt.value &&
+                      service.hasFemaleSprite.value;
 
-                  return Text(
-                    hint,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  // Reset female when switching to 3D
+                  if (!spriteCtrl.usePixelArt.value && showFemale.value) {
+                    showFemale.value = false;
+                  }
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Normal / Shiny toggle
+                      _buildToggleChip(
+                        context,
+                        label: 'Normal',
+                        isActive: !showShiny.value,
+                        onTap: () => showShiny.value = false,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildToggleChip(
+                        context,
+                        label: 'Shiny',
+                        icon: Icons.auto_awesome,
+                        isActive: showShiny.value,
+                        onTap: () => showShiny.value = true,
+                      ),
+                      if (showGender) ...[
+                        const SizedBox(width: 16),
+                        Container(
+                          width: 1,
+                          height: 28,
+                          color: theme.colorScheme.onSurface.withOpacity(0.15),
+                        ),
+                        const SizedBox(width: 16),
+                        _buildToggleChip(
+                          context,
+                          label: '♂',
+                          isActive: !showFemale.value,
+                          onTap: () => showFemale.value = false,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildToggleChip(
+                          context,
+                          label: '♀',
+                          isActive: showFemale.value,
+                          onTap: () => showFemale.value = true,
+                        ),
+                      ],
+                    ],
                   );
                 },
               ),
@@ -88,26 +135,18 @@ class PokemonDetailScreen extends StatelessWidget {
                   children: pokemon.types.map((t) => TypeChip(type: t)).toList(),
                 ),
               const SizedBox(height: 24),
-              // Ownership badges (tappable to switch sprite)
+              // Ownership badges
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   OwnershipBadge(
                     label: 'Normal',
                     owned: service.hasNormal.value,
-                    active: !showShiny.value,
-                    onTap: service.hasNormal.value
-                        ? () => showShiny.value = false
-                        : null,
                   ),
                   const SizedBox(width: 24),
                   OwnershipBadge(
                     label: 'Shiny',
                     owned: service.hasShiny.value,
-                    active: showShiny.value,
-                    onTap: service.hasShiny.value
-                        ? () => showShiny.value = true
-                        : null,
                   ),
                 ],
               ),
@@ -115,6 +154,46 @@ class PokemonDetailScreen extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildToggleChip(
+    BuildContext context, {
+    required String label,
+    IconData? icon,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 14, color: isActive ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.6)),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                color: isActive ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

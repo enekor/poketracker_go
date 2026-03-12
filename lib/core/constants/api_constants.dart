@@ -5,12 +5,19 @@ class ApiConstants {
   static const String pokemonEndpoint = '$baseUrl/pokemon';
   static const String speciesEndpoint = '$baseUrl/pokemon-species';
 
-  /// Sprite URL templates
+  /// Sprite URL templates — pixel art (default front sprites)
   static String spriteUrl(int id) =>
       'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png';
 
   static String spriteShinyUrl(int id) =>
       'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/$id.png';
+
+  /// Sprite URL templates — 3D (Pokémon HOME renders)
+  static String spriteHomeUrl(int id) =>
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/$id.png';
+
+  static String spriteHomeShinyUrl(int id) =>
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/$id.png';
 
   /// Total number of Pokémon supported
   static const int totalPokemon = 1025;

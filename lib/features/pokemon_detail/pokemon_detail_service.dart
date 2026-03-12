@@ -14,6 +14,7 @@ class PokemonDetailService extends GetxController {
   final RxBool isLoading = true.obs;
   final RxBool hasNormal = false.obs;
   final RxBool hasShiny = false.obs;
+  final RxBool hasFemaleSprite = false.obs;
 
   @override
   void onInit() {
@@ -28,6 +29,7 @@ class PokemonDetailService extends GetxController {
       // Fetch full detail (with types)
       final detail = await _apiService.fetchPokemonDetail(basicPokemon.id);
       pokemon.value = detail;
+      hasFemaleSprite.value = detail.hasFemaleSprite;
 
       // Load user ownership
       final userEntry = _hiveService.getUserPokemon(basicPokemon.id);

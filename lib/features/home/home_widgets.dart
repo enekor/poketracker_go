@@ -98,7 +98,8 @@ class GlassCard extends StatelessWidget {
 class HubTile extends StatefulWidget {
   final String title;
   final String subtitle;
-  final IconData icon;
+  final IconData? icon;
+  final Widget? iconWidget;
   final Color color;
   final VoidCallback onTap;
 
@@ -106,7 +107,8 @@ class HubTile extends StatefulWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.icon,
+    this.icon,
+    this.iconWidget,
     required this.color,
     required this.onTap,
   });
@@ -169,15 +171,16 @@ class _HubTileState extends State<HubTile> with SingleTickerProviderStateMixin {
           ),
           child: Stack(
             children: [
-              Positioned(
-                right: -15,
-                bottom: -15,
-                child: Icon(
-                  widget.icon,
-                  size: 100,
-                  color: widget.color.withOpacity(0.08),
+              if (widget.icon != null)
+                Positioned(
+                  right: -15,
+                  bottom: -15,
+                  child: Icon(
+                    widget.icon,
+                    size: 100,
+                    color: widget.color.withOpacity(0.08),
+                  ),
                 ),
-              ),
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -189,7 +192,8 @@ class _HubTileState extends State<HubTile> with SingleTickerProviderStateMixin {
                         color: widget.color.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(widget.icon, color: widget.color, size: 28),
+                      child: widget.iconWidget ??
+                          Icon(widget.icon, color: widget.color, size: 28),
                     ),
                     const Spacer(),
                     Text(

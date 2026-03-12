@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get/get.dart';
 import 'package:poketracker_go/app/theme/app_colors.dart';
+import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
 import 'package:poketracker_go/core/models/pokemon_model.dart';
 
 /// A selectable Pokémon tile for the selector grid.
@@ -23,7 +25,10 @@ class SelectablePokemonTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final spriteUrl = isShiny ? pokemon.spriteShinyUrl : pokemon.spriteUrl;
+    final spriteCtrl = Get.find<SpriteStyleController>();
+    final spriteUrl = isShiny
+        ? spriteCtrl.spriteShinyUrl(pokemon.id)
+        : spriteCtrl.spriteUrl(pokemon.id);
     final selectedColor = theme.brightness == Brightness.dark
         ? AppColors.selectedBorderDark
         : AppColors.selectedBorderLight;

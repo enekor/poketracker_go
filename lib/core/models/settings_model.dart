@@ -9,5 +9,8 @@ class SettingsModel extends HiveObject {
   @HiveField(0)
   bool isDarkMode;
 
-  SettingsModel({this.isDarkMode = false});
+  @HiveField(1)
+  bool usePixelArt;
+
+  SettingsModel({this.isDarkMode = false, this.usePixelArt = true});
 }
