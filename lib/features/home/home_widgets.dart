@@ -100,6 +100,7 @@ class HubTile extends StatefulWidget {
   final String subtitle;
   final IconData? icon;
   final Widget? iconWidget;
+  final Widget? backgroundWidget;
   final Color color;
   final VoidCallback onTap;
 
@@ -109,6 +110,7 @@ class HubTile extends StatefulWidget {
     required this.subtitle,
     this.icon,
     this.iconWidget,
+    this.backgroundWidget,
     required this.color,
     required this.onTap,
   });
@@ -179,6 +181,19 @@ class _HubTileState extends State<HubTile> with SingleTickerProviderStateMixin {
                     widget.icon,
                     size: 100,
                     color: widget.color.withOpacity(0.08),
+                  ),
+                )
+              else if (widget.backgroundWidget != null)
+                Positioned(
+                  right: -15,
+                  bottom: -15,
+                  child: Opacity(
+                    opacity: 0.12,
+                    child: SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: widget.backgroundWidget!,
+                    ),
                   ),
                 ),
               Padding(

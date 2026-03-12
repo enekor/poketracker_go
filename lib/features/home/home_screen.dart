@@ -168,31 +168,47 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Obx(
-                    () => HubTile(
-                      title: spriteController.usePixelArt.value
-                          ? 'Pixel Art'
-                          : '3D Sprites',
-                      subtitle: 'Cambiar estilo',
-                      iconWidget: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CachedNetworkImage(
-                          imageUrl: spriteController.pikachuSpriteUrl,
-                          fit: BoxFit.contain,
-                          filterQuality: spriteController.usePixelArt.value
-                              ? FilterQuality.none
-                              : FilterQuality.low,
-                          placeholder: (_, __) => const SizedBox.shrink(),
-                          errorWidget: (_, __, ___) => const Icon(
-                            Icons.catching_pokemon,
-                            size: 28,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Obx(
+                          () => HubTile(
+                            title: spriteController.usePixelArt.value
+                                ? 'Pixel Art'
+                                : '3D Sprites',
+                            subtitle: 'Cambiar estilo',
+                            iconWidget: SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CachedNetworkImage(
+                                imageUrl: spriteController.pikachuSpriteUrl,
+                                fit: BoxFit.contain,
+                                filterQuality:
+                                    spriteController.usePixelArt.value
+                                        ? FilterQuality.none
+                                        : FilterQuality.low,
+                                placeholder: (_, __) =>
+                                    const SizedBox.shrink(),
+                                errorWidget: (_, __, ___) => const Icon(
+                                  Icons.catching_pokemon,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                            backgroundWidget: CachedNetworkImage(
+                              imageUrl: spriteController.pikachuSpriteUrl,
+                              fit: BoxFit.contain,
+                              filterQuality:
+                                  spriteController.usePixelArt.value
+                                      ? FilterQuality.none
+                                      : FilterQuality.low,
+                            ),
+                            color: Colors.orange,
+                            onTap: spriteController.toggleStyle,
                           ),
                         ),
                       ),
-                      color: Colors.orange,
-                      onTap: spriteController.toggleStyle,
-                    ),
+                    ],
                   ),
                 ],
               ),
