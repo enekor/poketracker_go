@@ -423,3 +423,87 @@ class NormalShinyIndicator extends StatelessWidget {
     );
   }
 }
+
+/// A selectable Pokémon tile for the selector grid.
+class SelectablePokemonTile extends StatelessWidget {
+  final PokemonModel pokemon;
+  final bool isSelected;
+  final bool isShiny;
+  final VoidCallback onTap;
+
+  const SelectablePokemonTile({
+    super.key,
+    required this.pokemon,
+    required this.isSelected,
+    required this.isShiny,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final spriteCtrl = Get.find<SpriteStyleController>();
+    final spriteUrl = isShiny
+        ? spriteCtrl.spriteShinyUrl(pokemon.id)
+        : spriteCtrl.spriteUrl(pokemon.id);
+    final selectedColor = theme.brightness == Brightness.dark
+        ? AppColors.selectedBorderDark
+        : AppColors.selectedBorderLight;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: isSelected
+              ? BorderSide(color: selectedColor, width: 2.5)
+              : BorderSide.none,
+        ),
+        child: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: CachedNetworkImage(
+                      imageUrl: spriteUrl,
+                      placeholder: (_, __) => const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) =>
+                          const Icon(Icons.error_outline),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    pokemon.formattedId,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (isSelected)
+              Positioned(
+                top: 4,
+                right: 4,
+                child:
+                    Icon(Icons.check_circle, color: selectedColor, size: 20),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}

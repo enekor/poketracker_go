@@ -1,84 +1,23 @@
 // lib/features/pokedex/pokedex_service.dart
 
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:poketracker_go/core/constants/pokemon_generations.dart';
-import 'package:poketracker_go/core/models/pokemon_model.dart';
 import 'package:poketracker_go/core/models/user_pokemon_model.dart';
-import 'package:poketracker_go/core/services/api_service.dart';
-import 'package:poketracker_go/core/services/hive_service.dart';
+import 'package:poketracker_go/features/pokedex/pokedex_base_service.dart';
 
-class PokedexService extends GetxController {
-  final ApiService _apiService = Get.find<ApiService>();
-  final HiveService _hiveService = Get.find<HiveService>();
+/// Read-only Pokédex: browse collection, view detail on tap.
+class PokedexService extends PokedexBaseService {
+  final RxMap<int, UserPokemonModel> userPokemon =
+      <int, UserPokemonModel>{}.obs;
 
-  final RxList<PokemonModel> allPokemon = <PokemonModel>[].obs;
-  final RxMap<int, UserPokemonModel> userPokemon = <int, UserPokemonModel>{}.obs;
-  final RxBool isLoading = true.obs;
-  final RxInt currentPage = 0.obs; // 0 = Normal, 1 = Shiny
-  final RxString searchQuery = ''.obs;
-  final RxInt selectedGeneration = 0.obs; // 0 = all
-  final RxInt ownershipFilter = 0.obs; // 0 = all, 1 = owned, 2 = not owned
-
-  /// Scroll controllers for normal and shiny grids.
   final ScrollController normalScrollController = ScrollController();
   final ScrollController shinyScrollController = ScrollController();
-
-  /// PageController for the Normal/Shiny swipe.
   final PageController pageController = PageController();
-
-  Timer? _debounce;
-
-  /// Computed list of generation groups for the grid.
-  List<MapEntry<int, List<PokemonModel>>> get pokemonByGeneration {
-    final filtered = _filteredPokemon;
-    final Map<int, List<PokemonModel>> groups = {};
-    for (final p in filtered) {
-      groups.putIfAbsent(p.generation, () => []).add(p);
-    }
-    final sorted = groups.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    return sorted;
-  }
-
-  List<PokemonModel> get _filteredPokemon {
-    var list = allPokemon.toList();
-
-    if (selectedGeneration.value > 0) {
-      list = list.where((p) => p.generation == selectedGeneration.value).toList();
-    }
-
-    if (searchQuery.value.isNotEmpty) {
-      final q = searchQuery.value.toLowerCase().replaceAll('#', '');
-      final asInt = int.tryParse(q);
-      if (asInt != null) {
-        list = list.where((p) => p.id == asInt).toList();
-      } else {
-        list = list.where((p) => p.name.toLowerCase().contains(q)).toList();
-      }
-    }
-
-    // Ownership filter (context-aware: normal vs shiny page)
-    if (ownershipFilter.value == 1) {
-      // Only owned
-      list = list.where((p) {
-        return currentPage.value == 1 ? hasShiny(p.id) : hasNormal(p.id);
-      }).toList();
-    } else if (ownershipFilter.value == 2) {
-      // Only not owned
-      list = list.where((p) {
-        return currentPage.value == 1 ? !hasShiny(p.id) : !hasNormal(p.id);
-      }).toList();
-    }
-
-    return list;
-  }
 
   @override
   void onInit() {
     super.onInit();
-    _loadData();
+    loadData();
     _syncScrollControllers();
   }
 
@@ -87,21 +26,31 @@ class PokedexService extends GetxController {
     normalScrollController.dispose();
     shinyScrollController.dispose();
     pageController.dispose();
-    _debounce?.cancel();
     super.onClose();
   }
 
-  Future<void> _loadData() async {
-    try {
-      isLoading.value = true;
-      final pokemon = await _apiService.fetchAllPokemon();
-      allPokemon.assignAll(pokemon);
-      userPokemon.assignAll(_hiveService.getAllUserPokemon());
-    } catch (e) {
-      Get.snackbar('Error', 'No se pudieron cargar los Pokémon: $e');
-    } finally {
-      isLoading.value = false;
-    }
+  @override
+  void onDataLoaded() {
+    userPokemon.assignAll(hiveService.getAllUserPokemon());
+  }
+
+  @override
+  bool isOwned(int pokemonId) {
+    return currentPage.value == 1
+        ? hasShiny(pokemonId)
+        : hasNormal(pokemonId);
+  }
+
+  bool hasNormal(int pokemonId) =>
+      userPokemon[pokemonId]?.hasNormal ?? false;
+
+  bool hasShiny(int pokemonId) =>
+      userPokemon[pokemonId]?.hasShiny ?? false;
+
+  void onPageChanged(int page) => currentPage.value = page;
+
+  void refreshUserData() {
+    userPokemon.assignAll(hiveService.getAllUserPokemon());
   }
 
   void _syncScrollControllers() {
@@ -115,36 +64,5 @@ class PokedexService extends GetxController {
         normalScrollController.jumpTo(shinyScrollController.offset);
       }
     });
-  }
-
-  void onPageChanged(int page) {
-    currentPage.value = page;
-  }
-
-  void onSearchChanged(String query) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      searchQuery.value = query;
-    });
-  }
-
-  void selectGeneration(int gen) {
-    selectedGeneration.value = gen;
-  }
-
-  void selectOwnershipFilter(int filter) {
-    ownershipFilter.value = filter;
-  }
-
-  bool hasNormal(int pokemonId) {
-    return userPokemon[pokemonId]?.hasNormal ?? false;
-  }
-
-  bool hasShiny(int pokemonId) {
-    return userPokemon[pokemonId]?.hasShiny ?? false;
-  }
-
-  void refreshUserData() {
-    userPokemon.assignAll(_hiveService.getAllUserPokemon());
   }
 }

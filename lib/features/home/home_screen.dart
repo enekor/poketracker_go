@@ -6,6 +6,7 @@ import 'package:poketracker_go/app/routes/app_routes.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
 import 'package:poketracker_go/app/theme/theme_controller.dart';
+import 'package:poketracker_go/features/pokedex/pokedex_screen.dart';
 import 'package:poketracker_go/features/home/home_service.dart';
 import 'package:poketracker_go/features/home/home_widgets.dart';
 
@@ -147,7 +148,8 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.menu_book_rounded,
                           color: theme.colorScheme.primary,
                           onTap: () async {
-                            await Get.toNamed(AppRoutes.pokedex);
+                            await Get.toNamed(AppRoutes.pokedex,
+                                arguments: PokedexMode.view);
                             service.refreshStats();
                           },
                         ),
@@ -160,7 +162,8 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.add_task_rounded,
                           color: theme.colorScheme.secondary,
                           onTap: () async {
-                            await Get.toNamed(AppRoutes.pokemonSelector);
+                            await Get.toNamed(AppRoutes.pokemonSelector,
+                                arguments: PokedexMode.select);
                             service.refreshStats();
                           },
                         ),
