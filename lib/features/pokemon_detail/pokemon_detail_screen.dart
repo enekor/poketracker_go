@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
+import 'package:poketracker_go/core/widgets/skeleton.dart';
 import 'package:poketracker_go/features/pokemon_detail/pokemon_detail_service.dart';
 import 'package:poketracker_go/features/pokemon_detail/pokemon_detail_widgets.dart';
 
@@ -22,7 +23,7 @@ class PokemonDetailScreen extends StatelessWidget {
       ),
       body: Obx(() {
         if (service.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const PokemonDetailSkeleton();
         }
 
         final pokemon = service.pokemon.value;

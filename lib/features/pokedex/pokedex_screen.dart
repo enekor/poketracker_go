@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:poketracker_go/app/routes/app_routes.dart';
+import 'package:poketracker_go/core/widgets/skeleton.dart';
 import 'package:poketracker_go/features/pokedex/pokedex_base_service.dart';
 import 'package:poketracker_go/features/pokedex/pokedex_service.dart';
 import 'package:poketracker_go/features/pokedex/pokedex_selector_service.dart';
@@ -31,10 +32,6 @@ class PokedexScreen extends StatelessWidget {
       bottomNavigationBar:
           isSelectMode ? _buildSaveBar(context, service as PokedexSelectorService) : null,
       body: Obx(() {
-        if (service.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         return Column(
           children: [
             // Normal / Shiny toggle
@@ -68,11 +65,13 @@ class PokedexScreen extends StatelessWidget {
             ),
             // Search bar
             PokemonSearchBar(onChanged: service.onSearchChanged),
-            // Grid
+            // Grid (or skeleton while loading)
             Expanded(
-              child: isSelectMode
-                  ? _buildSelectGrid(service as PokedexSelectorService)
-                  : _buildViewBody(service as PokedexService),
+              child: service.isLoading.value
+                  ? const PokedexGridSkeleton()
+                  : isSelectMode
+                      ? _buildSelectGrid(service as PokedexSelectorService)
+                      : _buildViewBody(service as PokedexService),
             ),
           ],
         );
@@ -177,7 +176,7 @@ class PokedexScreen extends StatelessWidget {
                       color: Theme.of(context)
                           .colorScheme
                           .onSurface
-                          .withOpacity(0.08),
+                          .withValues(alpha: 0.08),
                     ),
                   ),
                 ),
