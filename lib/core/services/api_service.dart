@@ -36,4 +36,64 @@ class ApiService {
     final data = json.decode(response.body);
     return PokemonModel.fromPokeApi(data);
   }
+
+  /// Fetches the evolution chain for a Pokémon by its ID.
+  /// Returns a flat list of evolution stages (each stage = list of species).
+  Future<List<List<EvolutionEntry>>> fetchEvolutionChain(int pokemonId) async {
+    // 1. Get species to find evolution_chain URL
+    final speciesUrl =
+        Uri.parse('${ApiConstants.speciesEndpoint}/$pokemonId');
+    final speciesResp = await http.get(speciesUrl);
+    if (speciesResp.statusCode != 200) return [];
+
+    final speciesData = json.decode(speciesResp.body);
+    final chainUrl = speciesData['evolution_chain']?['url'] as String?;
+    if (chainUrl == null) return [];
+
+    // 2. Fetch the evolution chain
+    final chainResp = await http.get(Uri.parse(chainUrl));
+    if (chainResp.statusCode != 200) return [];
+
+    final chainData = json.decode(chainResp.body);
+    final chain = chainData['chain'] as Map<String, dynamic>?;
+    if (chain == null) return [];
+
+    // 3. Flatten the nested structure into stages
+    return _flattenChain(chain);
+  }
+
+  List<List<EvolutionEntry>> _flattenChain(Map<String, dynamic> node) {
+    final List<List<EvolutionEntry>> stages = [];
+    List<Map<String, dynamic>> currentNodes = [node];
+
+    while (currentNodes.isNotEmpty) {
+      final List<EvolutionEntry> stage = [];
+      final List<Map<String, dynamic>> nextNodes = [];
+
+      for (final n in currentNodes) {
+        final species = n['species'] as Map<String, dynamic>;
+        final url = species['url'] as String;
+        final id =
+            int.parse(url.split('/').where((s) => s.isNotEmpty).last);
+        stage.add(EvolutionEntry(id: id, name: species['name'] as String));
+
+        final evolvesTo = n['evolves_to'] as List? ?? [];
+        for (final child in evolvesTo) {
+          nextNodes.add(child as Map<String, dynamic>);
+        }
+      }
+
+      stages.add(stage);
+      currentNodes = nextNodes;
+    }
+
+    return stages;
+  }
+}
+
+class EvolutionEntry {
+  final int id;
+  final String name;
+
+  const EvolutionEntry({required this.id, required this.name});
 }

@@ -15,12 +15,28 @@ class PokemonDetailService extends GetxController {
   final RxBool hasNormal = false.obs;
   final RxBool hasShiny = false.obs;
   final RxBool hasFemaleSprite = false.obs;
+  final RxList<List<EvolutionEntry>> evolutionChain =
+      <List<EvolutionEntry>>[].obs;
+  final RxBool isLoadingEvolution = true.obs;
 
   @override
   void onInit() {
     super.onInit();
     final PokemonModel arg = Get.arguments as PokemonModel;
-    _loadDetail(arg);
+    loadPokemon(arg.id, arg.name);
+  }
+
+  /// Loads a new Pokémon into this screen (used for evolution chain navigation).
+  void loadPokemon(int id, String name) {
+    final basicPokemon = PokemonModel(
+      id: id,
+      name: name,
+      spriteUrl: '',
+      spriteShinyUrl: '',
+      types: [],
+      generation: 0,
+    );
+    _loadDetail(basicPokemon);
   }
 
   Future<void> _loadDetail(PokemonModel basicPokemon) async {
@@ -40,6 +56,21 @@ class PokemonDetailService extends GetxController {
       pokemon.value = basicPokemon;
     } finally {
       isLoading.value = false;
+    }
+
+    // Load evolution chain (non-blocking)
+    _loadEvolutionChain(basicPokemon.id);
+  }
+
+  Future<void> _loadEvolutionChain(int pokemonId) async {
+    try {
+      isLoadingEvolution.value = true;
+      final chain = await _apiService.fetchEvolutionChain(pokemonId);
+      evolutionChain.assignAll(chain);
+    } catch (_) {
+      // Silently fail — evolution chain is optional
+    } finally {
+      isLoadingEvolution.value = false;
     }
   }
 

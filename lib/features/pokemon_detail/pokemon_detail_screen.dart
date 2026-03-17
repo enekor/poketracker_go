@@ -107,6 +107,21 @@ class PokemonDetailScreen extends StatelessWidget {
                       ? () => showShiny.value = true
                       : null,
                 ),
+
+                // 6. Evolution chain
+                if (!service.isLoadingEvolution.value &&
+                    service.evolutionChain.isNotEmpty) ...[
+                  const SizedBox(height: 32),
+                  EvolutionChainWidget(
+                    stages: service.evolutionChain,
+                    currentPokemonId: pokemon.id,
+                    onTap: (entry) {
+                      showShiny.value = false;
+                      showFemale.value = false;
+                      service.loadPokemon(entry.id, entry.name);
+                    },
+                  ),
+                ],
               ],
             );
           }),

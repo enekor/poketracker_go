@@ -2,6 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
+import 'package:poketracker_go/core/services/api_service.dart';
+import 'package:get/get.dart';
 
 /// Large sprite display.
 class PokemonSpriteViewer extends StatelessWidget {
@@ -224,6 +227,152 @@ class OwnershipToggle extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                 color: fgColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Displays the evolution chain as a horizontal row of stages with arrows.
+class EvolutionChainWidget extends StatelessWidget {
+  final List<List<EvolutionEntry>> stages;
+  final int currentPokemonId;
+  final void Function(EvolutionEntry entry) onTap;
+
+  const EvolutionChainWidget({
+    super.key,
+    required this.stages,
+    required this.currentPokemonId,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Don't show if only one stage with one Pokémon (no evolution)
+    if (stages.length <= 1 && (stages.firstOrNull?.length ?? 0) <= 1) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Cadena evolutiva',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              for (int i = 0; i < stages.length; i++) ...[
+                if (i > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 20,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                // If a stage has multiple Pokémon (e.g. Eevee evolutions),
+                // stack them vertically
+                if (stages[i].length == 1)
+                  _EvolutionTile(
+                    entry: stages[i].first,
+                    isCurrent: stages[i].first.id == currentPokemonId,
+                    onTap: () => onTap(stages[i].first),
+                  )
+                else
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: stages[i]
+                        .map((entry) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: _EvolutionTile(
+                                entry: entry,
+                                isCurrent: entry.id == currentPokemonId,
+                                onTap: () => onTap(entry),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EvolutionTile extends StatelessWidget {
+  final EvolutionEntry entry;
+  final bool isCurrent;
+  final VoidCallback onTap;
+
+  const _EvolutionTile({
+    required this.entry,
+    required this.isCurrent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final spriteCtrl = Get.find<SpriteStyleController>();
+    final spriteUrl = spriteCtrl.spriteUrl(entry.id);
+    final isPixelArt = spriteCtrl.usePixelArt.value;
+
+    return GestureDetector(
+      onTap: isCurrent ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isCurrent
+              ? theme.colorScheme.primary.withValues(alpha: 0.12)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: isCurrent
+              ? Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                  width: 1.5)
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 56,
+              height: 56,
+              child: CachedNetworkImage(
+                imageUrl: spriteUrl,
+                fit: BoxFit.contain,
+                filterQuality:
+                    isPixelArt ? FilterQuality.none : FilterQuality.low,
+                placeholder: (_, __) => const SizedBox.shrink(),
+                errorWidget: (_, __, ___) =>
+                    const Icon(Icons.catching_pokemon, size: 32),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              entry.name[0].toUpperCase() + entry.name.substring(1),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                color: isCurrent
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
               ),
             ),
           ],
