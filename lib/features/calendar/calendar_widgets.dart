@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:poketracker_go/features/calendar/calendar_service.dart';
 
 // ─── Pokemon Type Colors ──────────────────────────────────
@@ -107,7 +108,12 @@ class _EventCard extends StatelessWidget {
             ? const BorderSide(color: Colors.green, width: 1.5)
             : BorderSide.none,
       ),
-      child: Column(
+      child: InkWell(
+        onTap: event.link.isNotEmpty
+            ? () => launchUrl(Uri.parse(event.link),
+                mode: LaunchMode.externalApplication)
+            : null,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (event.image.isNotEmpty)
@@ -170,6 +176,7 @@ class _EventCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -72,71 +72,8 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Main Progress Card
-                  Obx(
-                    () => GlassCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildStatItem(
-                                  context,
-                                  'NORMAL',
-                                  service.totalOwned.value,
-                                  service.totalPokemon,
-                                  Icons.catching_pokemon,
-                                  theme.colorScheme.primary,
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 40,
-                                  color: theme.colorScheme.onSurface
-                                      .withOpacity(0.1),
-                                ),
-                                _buildStatItem(
-                                  context,
-                                  'SHINY',
-                                  service.totalShiny.value,
-                                  service.totalPokemon,
-                                  Icons.auto_awesome,
-                                  theme.colorScheme.secondary,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: LinearProgressIndicator(
-                                value:
-                                    service.totalOwned.value /
-                                    service.totalPokemon,
-                                minHeight: 12,
-                                backgroundColor: theme.colorScheme.onSurface
-                                    .withOpacity(0.05),
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  theme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Active events today
-                  Obx(
-                    () => ActiveEventsCard(
-                      events: service.activeEvents,
-                      isLoading: service.isLoadingEvents.value,
-                      onTap: () => Get.toNamed(AppRoutes.calendar),
-                    ),
-                  ),
+                  // Swipeable carousel: Events <-> Pokédex Summary
+                  HomeCarousel(service: service),
 
                   const SizedBox(height: 32),
                   Text(
@@ -240,43 +177,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatItem(
-    BuildContext context,
-    String label,
-    int count,
-    int total,
-    IconData icon,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                letterSpacing: 1,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '$count / $total',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
     );
   }
 }

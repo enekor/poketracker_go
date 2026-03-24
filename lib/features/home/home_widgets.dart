@@ -1,8 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:poketracker_go/app/routes/app_routes.dart';
 import 'package:poketracker_go/features/calendar/calendar_service.dart';
 import 'package:poketracker_go/features/calendar/calendar_widgets.dart';
+import 'package:poketracker_go/features/home/home_service.dart';
 
 class PokeballBackground extends StatelessWidget {
   const PokeballBackground({super.key});
@@ -238,21 +241,199 @@ class _HubTileState extends State<HubTile> with SingleTickerProviderStateMixin {
   }
 }
 
-class ActiveEventsCard extends StatelessWidget {
+// ─── Home Carousel (Events <-> Pokédex Summary) ──────────
+
+class HomeCarousel extends StatefulWidget {
+  final HomeService service;
+  const HomeCarousel({super.key, required this.service});
+
+  @override
+  State<HomeCarousel> createState() => _HomeCarouselState();
+}
+
+class _HomeCarouselState extends State<HomeCarousel> {
+  final _pageController = PageController();
+  final _currentPage = ValueNotifier<double>(0.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController.addListener(() {
+      _currentPage.value = _pageController.page ?? 0.0;
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _currentPage.dispose();
+    super.dispose();
+  }
+
+  void _goToPage(int page) {
+    _pageController.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final service = widget.service;
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 260,
+          child: PageView(
+            controller: _pageController,
+            children: [
+              // Page 0: Active Events + Missing Pokemon
+              _CarouselPage(
+                swipeHintAlignment: Alignment.centerRight,
+                swipeIcon: Icons.catching_pokemon,
+                swipeIconColor: theme.colorScheme.primary,
+                onSwipeHintTap: () => _goToPage(1),
+                child: Obx(
+                  () => _EventsPage(
+                    events: service.activeEvents,
+                    isLoading: service.isLoadingEvents.value,
+                    missingPokemon: service.missingPokemon,
+                    isLoadingMissing: service.isLoadingMissing.value,
+                    onTap: () => Get.toNamed(AppRoutes.calendar),
+                  ),
+                ),
+              ),
+
+              // Page 1: Pokédex Summary
+              _CarouselPage(
+                swipeHintAlignment: Alignment.centerLeft,
+                swipeIcon: Icons.event_rounded,
+                swipeIconColor: Colors.green,
+                onSwipeHintTap: () => _goToPage(0),
+                child: Obx(
+                  () => _PokedexSummaryPage(
+                    totalOwned: service.totalOwned.value,
+                    totalShiny: service.totalShiny.value,
+                    totalPokemon: service.totalPokemon,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Page indicator dots
+        ValueListenableBuilder<double>(
+          valueListenable: _currentPage,
+          builder: (_, page, __) => Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(2, (i) {
+              final progress = (page - i).abs().clamp(0.0, 1.0);
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: progress < 0.5 ? 20 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: progress < 0.5
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withOpacity(0.2),
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CarouselPage extends StatelessWidget {
+  final Widget child;
+  final Alignment swipeHintAlignment;
+  final IconData swipeIcon;
+  final Color swipeIconColor;
+  final VoidCallback onSwipeHintTap;
+
+  const _CarouselPage({
+    required this.child,
+    required this.swipeHintAlignment,
+    required this.swipeIcon,
+    required this.swipeIconColor,
+    required this.onSwipeHintTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLeft = swipeHintAlignment == Alignment.centerLeft;
+
+    return Stack(
+      children: [
+        Padding(
+          padding: EdgeInsets.only(
+            left: isLeft ? 28 : 0,
+            right: isLeft ? 0 : 28,
+          ),
+          child: child,
+        ),
+        Align(
+          alignment: swipeHintAlignment,
+          child: GestureDetector(
+            onTap: onSwipeHintTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    swipeIcon,
+                    size: 18,
+                    color: swipeIconColor.withOpacity(0.6),
+                  ),
+                  const SizedBox(height: 2),
+                  Icon(
+                    isLeft
+                        ? Icons.chevron_left_rounded
+                        : Icons.chevron_right_rounded,
+                    size: 16,
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EventsPage extends StatelessWidget {
   final List<PogoEvent> events;
   final bool isLoading;
+  final List<MissingPokemon> missingPokemon;
+  final bool isLoadingMissing;
   final VoidCallback? onTap;
 
-  const ActiveEventsCard({
-    super.key,
+  const _EventsPage({
     required this.events,
-    this.isLoading = false,
+    required this.isLoading,
+    required this.missingPokemon,
+    required this.isLoadingMissing,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasMissing = missingPokemon.isNotEmpty || isLoadingMissing;
 
     return GlassCard(
       child: InkWell(
@@ -263,13 +444,10 @@ class ActiveEventsCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Row(
                 children: [
-                  Icon(
-                    Icons.event_rounded,
-                    size: 18,
-                    color: Colors.green,
-                  ),
+                  const Icon(Icons.event_rounded, size: 18, color: Colors.green),
                   const SizedBox(width: 8),
                   Text(
                     'HOY EN POKÉMON GO',
@@ -281,11 +459,12 @@ class ActiveEventsCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
+
+              // Events list
               if (isLoading)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
+                const Expanded(
+                  child: Center(
                     child: SizedBox(
                       width: 20,
                       height: 20,
@@ -293,25 +472,96 @@ class ActiveEventsCard extends StatelessWidget {
                     ),
                   ),
                 )
-              else if (events.isEmpty)
-                Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
+              else if (events.isEmpty && !hasMissing)
+                Expanded(
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded,
+                            size: 20,
+                            color: theme.colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Text(
+                          'No hay eventos importantes hoy',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'No hay eventos importantes hoy',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                )
+              else ...[
+                // Events
+                Expanded(
+                  child: events.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Sin eventos activos',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      : ListView(
+                          padding: EdgeInsets.zero,
+                          children: events
+                              .map((event) => _ActiveEventRow(event: event))
+                              .toList(),
+                        ),
+                ),
+
+                // Missing Pokemon section
+                if (hasMissing) ...[
+                  Divider(
+                    height: 1,
+                    color: theme.colorScheme.onSurface.withOpacity(0.08),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.catching_pokemon,
+                          size: 14, color: Colors.red.withOpacity(0.7)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'TE FALTAN',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                          fontSize: 9,
+                          color: theme.colorScheme.onSurface.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  if (isLoadingMissing)
+                    const SizedBox(
+                      height: 48,
+                      child: Center(
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    )
+                  else
+                    SizedBox(
+                      height: 56,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: missingPokemon.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: 8),
+                        itemBuilder: (context, index) =>
+                            _MissingPokemonTile(
+                                pokemon: missingPokemon[index]),
                       ),
                     ),
-                  ],
-                )
-              else
-                ...events.map((event) => _ActiveEventRow(event: event)),
+                ],
+              ],
             ],
           ),
         ),
@@ -319,6 +569,120 @@ class ActiveEventsCard extends StatelessWidget {
     );
   }
 }
+
+class _PokedexSummaryPage extends StatelessWidget {
+  final int totalOwned;
+  final int totalShiny;
+  final int totalPokemon;
+
+  const _PokedexSummaryPage({
+    required this.totalOwned,
+    required this.totalShiny,
+    required this.totalPokemon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return GlassCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _StatItem(
+                  label: 'NORMAL',
+                  count: totalOwned,
+                  total: totalPokemon,
+                  icon: Icons.catching_pokemon,
+                  color: theme.colorScheme.primary,
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: theme.colorScheme.onSurface.withOpacity(0.1),
+                ),
+                _StatItem(
+                  label: 'SHINY',
+                  count: totalShiny,
+                  total: totalPokemon,
+                  icon: Icons.auto_awesome,
+                  color: theme.colorScheme.secondary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: totalOwned / totalPokemon,
+                minHeight: 12,
+                backgroundColor:
+                    theme.colorScheme.onSurface.withOpacity(0.05),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final int count;
+  final int total;
+  final IconData icon;
+  final Color color;
+
+  const _StatItem({
+    required this.label,
+    required this.count,
+    required this.total,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$count / $total',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Active Event Row ─────────────────────────────────────
 
 class _ActiveEventRow extends StatelessWidget {
   final PogoEvent event;
@@ -350,7 +714,8 @@ class _ActiveEventRow extends StatelessWidget {
                     ),
                   ),
                 ),
-                errorWidget: (_, __, ___) => const SizedBox(width: 48, height: 32),
+                errorWidget: (_, __, ___) =>
+                    const SizedBox(width: 48, height: 32),
               ),
             )
           else
@@ -394,6 +759,70 @@ class _ActiveEventRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Missing Pokemon Tile ─────────────────────────────────
+
+class _MissingPokemonTile extends StatelessWidget {
+  final MissingPokemon pokemon;
+  const _MissingPokemonTile({required this.pokemon});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            CachedNetworkImage(
+              imageUrl: pokemon.image,
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.none,
+              placeholder: (_, __) => const SizedBox(width: 40, height: 40),
+              errorWidget: (_, __, ___) =>
+                  const Icon(Icons.catching_pokemon, size: 40),
+            ),
+            if (pokemon.isShiny)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    size: 12,
+                    color: Colors.amber,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 48,
+          child: Text(
+            pokemon.name,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 8,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
     );
   }
 }
