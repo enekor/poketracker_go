@@ -252,30 +252,11 @@ class HomeCarousel extends StatefulWidget {
 }
 
 class _HomeCarouselState extends State<HomeCarousel> {
-  final _pageController = PageController();
-  final _currentPage = ValueNotifier<double>(0.0);
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController.addListener(() {
-      _currentPage.value = _pageController.page ?? 0.0;
-    });
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _currentPage.dispose();
-    super.dispose();
-  }
+  int _currentIndex = 0;
+  double _dragStartX = 0;
 
   void _goToPage(int page) {
-    _pageController.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    setState(() => _currentIndex = page.clamp(0, 1));
   }
 
   @override
@@ -283,71 +264,82 @@ class _HomeCarouselState extends State<HomeCarousel> {
     final theme = Theme.of(context);
     final service = widget.service;
 
+    final pages = [
+      // Page 0: Active Events + Missing Pokemon
+      _CarouselPage(
+        key: const ValueKey(0),
+        swipeHintAlignment: Alignment.centerRight,
+        swipeIcon: Icons.catching_pokemon,
+        swipeIconColor: theme.colorScheme.primary,
+        onSwipeHintTap: () => _goToPage(1),
+        child: Obx(
+          () => _EventsPage(
+            events: service.activeEvents,
+            isLoading: service.isLoadingEvents.value,
+            missingPokemon: service.missingPokemon,
+            isLoadingMissing: service.isLoadingMissing.value,
+            onTap: () => Get.toNamed(AppRoutes.calendar),
+          ),
+        ),
+      ),
+
+      // Page 1: Pokédex Summary
+      _CarouselPage(
+        key: const ValueKey(1),
+        swipeHintAlignment: Alignment.centerLeft,
+        swipeIcon: Icons.event_rounded,
+        swipeIconColor: Colors.green,
+        onSwipeHintTap: () => _goToPage(0),
+        child: Obx(
+          () => _PokedexSummaryPage(
+            totalOwned: service.totalOwned.value,
+            totalShiny: service.totalShiny.value,
+            totalPokemon: service.totalPokemon,
+          ),
+        ),
+      ),
+    ];
+
     return Column(
       children: [
-        SizedBox(
-          height: 260,
-          child: PageView(
-            controller: _pageController,
-            children: [
-              // Page 0: Active Events + Missing Pokemon
-              _CarouselPage(
-                swipeHintAlignment: Alignment.centerRight,
-                swipeIcon: Icons.catching_pokemon,
-                swipeIconColor: theme.colorScheme.primary,
-                onSwipeHintTap: () => _goToPage(1),
-                child: Obx(
-                  () => _EventsPage(
-                    events: service.activeEvents,
-                    isLoading: service.isLoadingEvents.value,
-                    missingPokemon: service.missingPokemon,
-                    isLoadingMissing: service.isLoadingMissing.value,
-                    onTap: () => Get.toNamed(AppRoutes.calendar),
-                  ),
-                ),
-              ),
-
-              // Page 1: Pokédex Summary
-              _CarouselPage(
-                swipeHintAlignment: Alignment.centerLeft,
-                swipeIcon: Icons.event_rounded,
-                swipeIconColor: Colors.green,
-                onSwipeHintTap: () => _goToPage(0),
-                child: Obx(
-                  () => _PokedexSummaryPage(
-                    totalOwned: service.totalOwned.value,
-                    totalShiny: service.totalShiny.value,
-                    totalPokemon: service.totalPokemon,
-                  ),
-                ),
-              ),
-            ],
+        GestureDetector(
+          onHorizontalDragStart: (d) => _dragStartX = d.globalPosition.dx,
+          onHorizontalDragEnd: (d) {
+            final delta = d.globalPosition.dx - _dragStartX;
+            if (delta < -50) _goToPage(_currentIndex + 1);
+            else if (delta > 50) _goToPage(_currentIndex - 1);
+          },
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: pages[_currentIndex],
+            ),
           ),
         ),
 
         const SizedBox(height: 10),
 
         // Page indicator dots
-        ValueListenableBuilder<double>(
-          valueListenable: _currentPage,
-          builder: (_, page, __) => Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(2, (i) {
-              final progress = (page - i).abs().clamp(0.0, 1.0);
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: progress < 0.5 ? 20 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: progress < 0.5
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withOpacity(0.2),
-                ),
-              );
-            }),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(2, (i) {
+            final isActive = i == _currentIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 20 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: isActive
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withOpacity(0.2),
+              ),
+            );
+          }),
         ),
       ],
     );
@@ -362,6 +354,7 @@ class _CarouselPage extends StatelessWidget {
   final VoidCallback onSwipeHintTap;
 
   const _CarouselPage({
+    super.key,
     required this.child,
     required this.swipeHintAlignment,
     required this.swipeIcon,
@@ -376,13 +369,7 @@ class _CarouselPage extends StatelessWidget {
 
     return Stack(
       children: [
-        Padding(
-          padding: EdgeInsets.only(
-            left: isLeft ? 28 : 0,
-            right: isLeft ? 0 : 28,
-          ),
-          child: child,
-        ),
+        child,
         Align(
           alignment: swipeHintAlignment,
           child: GestureDetector(
@@ -463,7 +450,8 @@ class _EventsPage extends StatelessWidget {
 
               // Events list
               if (isLoading)
-                const Expanded(
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: SizedBox(
                       width: 20,
@@ -473,7 +461,8 @@ class _EventsPage extends StatelessWidget {
                   ),
                 )
               else if (events.isEmpty && !hasMissing)
-                Expanded(
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -494,23 +483,29 @@ class _EventsPage extends StatelessWidget {
                 )
               else ...[
                 // Events
-                Expanded(
-                  child: events.isEmpty
-                      ? Center(
-                          child: Text(
-                            'Sin eventos activos',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        )
-                      : ListView(
-                          padding: EdgeInsets.zero,
-                          children: events
-                              .map((event) => _ActiveEventRow(event: event))
-                              .toList(),
+                if (events.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: Text(
+                        'Sin eventos activos',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
-                ),
+                      ),
+                    ),
+                  )
+                else
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 120),
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      children: events
+                          .map((event) => _ActiveEventRow(event: event))
+                          .toList(),
+                    ),
+                  ),
 
                 // Missing Pokemon section
                 if (hasMissing) ...[
@@ -587,9 +582,9 @@ class _PokedexSummaryPage extends StatelessWidget {
 
     return GlassCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 24),
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
