@@ -127,7 +127,18 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
+
+                  // Active events today
+                  Obx(
+                    () => ActiveEventsCard(
+                      events: service.activeEvents,
+                      isLoading: service.isLoadingEvents.value,
+                      onTap: () => Get.toNamed(AppRoutes.calendar),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
                   Text(
                     'ACCESO RÁPIDO',
                     style: theme.textTheme.labelMedium?.copyWith(
