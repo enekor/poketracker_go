@@ -7,9 +7,11 @@ import 'package:poketracker_go/core/models/settings_model.dart';
 class HiveService {
   static const String userPokemonBoxName = 'user_pokemon';
   static const String settingsBoxName = 'settings';
+  static const String calendarFiltersBoxName = 'calendar_filters';
 
   late Box<UserPokemonModel> userPokemonBox;
   late Box<SettingsModel> settingsBox;
+  late Box calendarFiltersBox;
 
   /// Initialize Hive, register adapters, and open boxes.
   Future<void> init() async {
@@ -20,6 +22,7 @@ class HiveService {
 
     userPokemonBox = await Hive.openBox<UserPokemonModel>(userPokemonBoxName);
     settingsBox = await Hive.openBox<SettingsModel>(settingsBoxName);
+    calendarFiltersBox = await Hive.openBox(calendarFiltersBoxName);
   }
 
   // --- User Pokémon CRUD ---

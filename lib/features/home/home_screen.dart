@@ -211,6 +211,16 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: HubTile(
+                          title: 'Calendario',
+                          subtitle: 'Eventos en vivo',
+                          icon: Icons.event_rounded,
+                          color: Colors.green,
+                          onTap: () => Get.toNamed(AppRoutes.calendar),
+                        ),
+                      ),
                     ],
                   ),
                 ],
