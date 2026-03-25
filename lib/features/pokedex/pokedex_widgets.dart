@@ -156,8 +156,13 @@ class _PokemonGridTileState extends State<PokemonGridTile> with SingleTickerProv
 /// Sticky header for a generation group.
 class GenerationHeader extends StatelessWidget {
   final int generation;
+  final VoidCallback? onSelectAll;
 
-  const GenerationHeader({super.key, required this.generation});
+  const GenerationHeader({
+    super.key,
+    required this.generation,
+    this.onSelectAll,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -177,15 +182,35 @@ class GenerationHeader extends StatelessWidget {
           ),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Text(
-        genData['name'] as String,
-        style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: theme.brightness == Brightness.dark
-              ? Colors.white
-              : theme.colorScheme.primary.withOpacity(0.8),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            genData['name'] as String,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.brightness == Brightness.dark
+                  ? Colors.white
+                  : theme.colorScheme.primary.withOpacity(0.8),
+            ),
+          ),
+          if (onSelectAll != null)
+            TextButton.icon(
+              onPressed: onSelectAll,
+              icon: const Icon(Icons.done_all_rounded, size: 18),
+              label: const Text(
+                'Seleccionar Todos',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                foregroundColor: theme.brightness == Brightness.dark
+                    ? Colors.white.withOpacity(0.9)
+                    : theme.colorScheme.primary,
+              ),
+            ),
+        ],
       ),
     );
   }

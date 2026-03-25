@@ -44,6 +44,11 @@ class HomeScreen extends StatelessWidget {
               onPressed: themeController.toggleTheme,
             ),
           ),
+          IconButton(
+            icon: Icon(Icons.import_export_rounded, color: theme.colorScheme.onSurface),
+            onPressed: () => Get.toNamed(AppRoutes.settings),
+            tooltip: 'Exportar/Importar Datos',
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -64,14 +69,6 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Tu progreso actual en la Pokédex.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
                   // Swipeable carousel: Events <-> Pokédex Summary
                   HomeCarousel(service: service),
 
@@ -96,8 +93,10 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.menu_book_rounded,
                           color: theme.colorScheme.primary,
                           onTap: () async {
-                            await Get.toNamed(AppRoutes.pokedex,
-                                arguments: PokedexMode.view);
+                            await Get.toNamed(
+                              AppRoutes.pokedex,
+                              arguments: PokedexMode.view,
+                            );
                             service.refreshStats();
                           },
                         ),
@@ -110,8 +109,10 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.add_task_rounded,
                           color: theme.colorScheme.secondary,
                           onTap: () async {
-                            await Get.toNamed(AppRoutes.pokemonSelector,
-                                arguments: PokedexMode.select);
+                            await Get.toNamed(
+                              AppRoutes.pokemonSelector,
+                              arguments: PokedexMode.select,
+                            );
                             service.refreshStats();
                           },
                         ),
@@ -136,10 +137,9 @@ class HomeScreen extends StatelessWidget {
                                 fit: BoxFit.contain,
                                 filterQuality:
                                     spriteController.usePixelArt.value
-                                        ? FilterQuality.none
-                                        : FilterQuality.low,
-                                placeholder: (_, __) =>
-                                    const SizedBox.shrink(),
+                                    ? FilterQuality.none
+                                    : FilterQuality.low,
+                                placeholder: (_, __) => const SizedBox.shrink(),
                                 errorWidget: (_, __, ___) => const Icon(
                                   Icons.catching_pokemon,
                                   size: 28,
@@ -149,10 +149,9 @@ class HomeScreen extends StatelessWidget {
                             backgroundWidget: CachedNetworkImage(
                               imageUrl: spriteController.pikachuSpriteUrl,
                               fit: BoxFit.contain,
-                              filterQuality:
-                                  spriteController.usePixelArt.value
-                                      ? FilterQuality.none
-                                      : FilterQuality.low,
+                              filterQuality: spriteController.usePixelArt.value
+                                  ? FilterQuality.none
+                                  : FilterQuality.low,
                             ),
                             color: Colors.orange,
                             onTap: spriteController.toggleStyle,

@@ -213,7 +213,8 @@ class _HubTileState extends State<HubTile> with SingleTickerProviderStateMixin {
                         color: widget.color.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: widget.iconWidget ??
+                      child:
+                          widget.iconWidget ??
                           Icon(widget.icon, color: widget.color, size: 28),
                     ),
                     const Spacer(),
@@ -269,9 +270,6 @@ class _HomeCarouselState extends State<HomeCarousel> {
       _CarouselPage(
         key: const ValueKey(0),
         swipeHintAlignment: Alignment.centerRight,
-        swipeIcon: Icons.catching_pokemon,
-        swipeIconColor: theme.colorScheme.primary,
-        onSwipeHintTap: () => _goToPage(1),
         child: Obx(
           () => _EventsPage(
             events: service.activeEvents,
@@ -287,9 +285,6 @@ class _HomeCarouselState extends State<HomeCarousel> {
       _CarouselPage(
         key: const ValueKey(1),
         swipeHintAlignment: Alignment.centerLeft,
-        swipeIcon: Icons.event_rounded,
-        swipeIconColor: Colors.green,
-        onSwipeHintTap: () => _goToPage(0),
         child: Obx(
           () => _PokedexSummaryPage(
             totalOwned: service.totalOwned.value,
@@ -306,8 +301,10 @@ class _HomeCarouselState extends State<HomeCarousel> {
           onHorizontalDragStart: (d) => _dragStartX = d.globalPosition.dx,
           onHorizontalDragEnd: (d) {
             final delta = d.globalPosition.dx - _dragStartX;
-            if (delta < -50) _goToPage(_currentIndex + 1);
-            else if (delta > 50) _goToPage(_currentIndex - 1);
+            if (delta < -50)
+              _goToPage(_currentIndex + 1);
+            else if (delta > 50)
+              _goToPage(_currentIndex - 1);
           },
           child: AnimatedSize(
             duration: const Duration(milliseconds: 300),
@@ -349,17 +346,11 @@ class _HomeCarouselState extends State<HomeCarousel> {
 class _CarouselPage extends StatelessWidget {
   final Widget child;
   final Alignment swipeHintAlignment;
-  final IconData swipeIcon;
-  final Color swipeIconColor;
-  final VoidCallback onSwipeHintTap;
 
   const _CarouselPage({
     super.key,
     required this.child,
     required this.swipeHintAlignment,
-    required this.swipeIcon,
-    required this.swipeIconColor,
-    required this.onSwipeHintTap,
   });
 
   @override
@@ -367,38 +358,7 @@ class _CarouselPage extends StatelessWidget {
     final theme = Theme.of(context);
     final isLeft = swipeHintAlignment == Alignment.centerLeft;
 
-    return Stack(
-      children: [
-        child,
-        Align(
-          alignment: swipeHintAlignment,
-          child: GestureDetector(
-            onTap: onSwipeHintTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    swipeIcon,
-                    size: 18,
-                    color: swipeIconColor.withOpacity(0.6),
-                  ),
-                  const SizedBox(height: 2),
-                  Icon(
-                    isLeft
-                        ? Icons.chevron_left_rounded
-                        : Icons.chevron_right_rounded,
-                    size: 16,
-                    color: theme.colorScheme.onSurface.withOpacity(0.3),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+    return Stack(children: [child]);
   }
 }
 
@@ -434,7 +394,11 @@ class _EventsPage extends StatelessWidget {
               // Header
               Row(
                 children: [
-                  const Icon(Icons.event_rounded, size: 18, color: Colors.green),
+                  const Icon(
+                    Icons.event_rounded,
+                    size: 18,
+                    color: Colors.green,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'HOY EN POKÉMON GO',
@@ -467,9 +431,11 @@ class _EventsPage extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_circle_outline_rounded,
-                            size: 20,
-                            color: theme.colorScheme.onSurfaceVariant),
+                        Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 20,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'No hay eventos importantes hoy',
@@ -516,8 +482,11 @@ class _EventsPage extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.catching_pokemon,
-                          size: 14, color: Colors.red.withOpacity(0.7)),
+                      Icon(
+                        Icons.catching_pokemon,
+                        size: 14,
+                        color: Colors.red.withOpacity(0.7),
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'TE FALTAN',
@@ -548,11 +517,9 @@ class _EventsPage extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: missingPokemon.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: 8),
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (context, index) =>
-                            _MissingPokemonTile(
-                                pokemon: missingPokemon[index]),
+                            _MissingPokemonTile(pokemon: missingPokemon[index]),
                       ),
                     ),
                 ],
@@ -616,8 +583,7 @@ class _PokedexSummaryPage extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: totalOwned / totalPokemon,
                 minHeight: 12,
-                backgroundColor:
-                    theme.colorScheme.onSurface.withOpacity(0.05),
+                backgroundColor: theme.colorScheme.onSurface.withOpacity(0.05),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   theme.colorScheme.primary,
                 ),

@@ -140,7 +140,13 @@ class PokedexScreen extends StatelessWidget {
     return [
       for (final entry in groups) ...[
         SliverToBoxAdapter(
-          child: GenerationHeader(generation: entry.key),
+          child: GenerationHeader(
+            generation: entry.key,
+            onSelectAll: Get.find<PokedexBaseService>() is PokedexSelectorService
+                ? () => (Get.find<PokedexBaseService>() as PokedexSelectorService)
+                    .selectAllInGeneration(entry.key)
+                : null,
+          ),
         ),
         SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

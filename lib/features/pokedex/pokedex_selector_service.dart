@@ -1,6 +1,7 @@
 // lib/features/pokedex/pokedex_selector_service.dart
 
 import 'package:get/get.dart';
+import 'package:poketracker_go/core/constants/pokemon_generations.dart';
 import 'package:poketracker_go/core/models/user_pokemon_model.dart';
 import 'package:poketracker_go/features/pokedex/pokedex_base_service.dart';
 
@@ -47,6 +48,30 @@ class PokedexSelectorService extends PokedexBaseService {
 
   void togglePokemon(int pokemonId) {
     selection[pokemonId] = !(selection[pokemonId] ?? false);
+    selection.refresh();
+  }
+
+  void selectAllInGeneration(int generation) {
+    final genData = pokemonGenerations[generation];
+    if (genData == null) return;
+
+    final start = genData['start'] as int;
+    final end = genData['end'] as int;
+
+    // Check if all are already selected in this range
+    bool allSelected = true;
+    for (int i = start; i <= end; i++) {
+        if (selection[i] != true) {
+            allSelected = false;
+            break;
+        }
+    }
+
+    // Toggle all
+    final targetValue = !allSelected;
+    for (int i = start; i <= end; i++) {
+        selection[i] = targetValue;
+    }
     selection.refresh();
   }
 

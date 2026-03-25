@@ -41,10 +41,7 @@ class HomeService extends GetxController {
   }
 
   Future<void> _loadAll() async {
-    await Future.wait([
-      loadActiveEvents(),
-      _loadMissingPokemon(),
-    ]);
+    await Future.wait([loadActiveEvents(), _loadMissingPokemon()]);
   }
 
   Future<void> loadActiveEvents() async {
@@ -55,10 +52,10 @@ class HomeService extends GetxController {
         final list = json.decode(resp.body) as List;
         final allEvents = list.map((e) => PogoEvent.fromJson(e)).toList();
 
-        final saved =
-            _hiveService.calendarFiltersBox.get('hiddenEventTypes');
-        final hidden =
-            saved is List ? saved.cast<String>().toSet() : <String>{};
+        final saved = _hiveService.calendarFiltersBox.get('hiddenEventTypes');
+        final hidden = saved is List
+            ? saved.cast<String>().toSet()
+            : <String>{};
 
         activeEvents.value = allEvents
             .where((e) => e.isActive && !hidden.contains(e.heading))
@@ -72,7 +69,6 @@ class HomeService extends GetxController {
     isLoadingMissing.value = true;
     try {
       final results = await Future.wait([
-        http.get(Uri.parse(ApiConstants.researchUrl)),
         http.get(Uri.parse(ApiConstants.raidsUrl)),
       ]);
 
@@ -93,40 +89,30 @@ class HomeService extends GetxController {
         final hasShiny = userData?.hasShiny ?? false;
 
         if (!hasNormal && seen.add('$id-normal')) {
-          missing.add(MissingPokemon(
-            id: id,
-            name: name,
-            image: _spriteCtrl.spriteUrl(id),
-            isShiny: false,
-          ));
+          missing.add(
+            MissingPokemon(
+              id: id,
+              name: name,
+              image: _spriteCtrl.spriteUrl(id),
+              isShiny: false,
+            ),
+          );
         }
         if (canBeShiny && !hasShiny && seen.add('$id-shiny')) {
-          missing.add(MissingPokemon(
-            id: id,
-            name: name,
-            image: _spriteCtrl.spriteShinyUrl(id),
-            isShiny: true,
-          ));
-        }
-      }
-
-      // Research rewards
-      if (results[0].statusCode == 200) {
-        final list = json.decode(results[0].body) as List;
-        for (final task in list) {
-          for (final r in (task['rewards'] as List? ?? [])) {
-            check(
-              name: r['name'] ?? '',
-              imageUrl: r['image'] ?? '',
-              canBeShiny: r['canBeShiny'] ?? false,
-            );
-          }
+          missing.add(
+            MissingPokemon(
+              id: id,
+              name: name,
+              image: _spriteCtrl.spriteShinyUrl(id),
+              isShiny: true,
+            ),
+          );
         }
       }
 
       // Raids
-      if (results[1].statusCode == 200) {
-        final list = json.decode(results[1].body) as List;
+      if (results[0].statusCode == 200) {
+        final list = json.decode(results[0].body) as List;
         for (final r in list) {
           check(
             name: r['name'] ?? '',

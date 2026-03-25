@@ -5,6 +5,7 @@ import 'package:poketracker_go/features/home/home_screen.dart';
 import 'package:poketracker_go/features/pokedex/pokedex_screen.dart';
 import 'package:poketracker_go/features/pokemon_detail/pokemon_detail_screen.dart';
 import 'package:poketracker_go/features/calendar/calendar_screen.dart';
+import 'package:poketracker_go/features/settings/settings_screen.dart';
 
 class AppRoutes {
   static const String home = '/home';
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String pokemonSelector = '/pokemon-selector';
   static const String pokemonDetail = '/pokemon-detail';
   static const String calendar = '/calendar';
+  static const String settings = '/settings';
 
   static List<GetPage> pages = [
     GetPage(name: home, page: () => const HomeScreen()),
@@ -19,5 +21,6 @@ class AppRoutes {
     GetPage(name: pokemonSelector, page: () => const PokedexScreen()),
     GetPage(name: pokemonDetail, page: () => const PokemonDetailScreen()),
     GetPage(name: calendar, page: () => const CalendarScreen()),
+    GetPage(name: settings, page: () => const SettingsScreen()),
   ];
 }
