@@ -131,6 +131,8 @@ class PogoEvent {
   final String image;
   final DateTime? start;
   final DateTime? end;
+  final bool hasSpawns;
+  final List<EventSpawn> eventSpawns;
 
   PogoEvent({
     required this.eventId,
@@ -141,9 +143,44 @@ class PogoEvent {
     required this.image,
     this.start,
     this.end,
+    this.hasSpawns = false,
+    this.eventSpawns = const [],
   });
 
   factory PogoEvent.fromJson(Map<String, dynamic> json) {
+    final extraData = json['extraData'] as Map<String, dynamic>? ?? {};
+    final generic = extraData['generic'] as Map<String, dynamic>? ?? {};
+    final hasSpawns = generic['hasSpawns'] == true;
+
+    final spawns = <EventSpawn>[];
+
+    // Community Day spawns
+    final cd = extraData['communityday'] as Map<String, dynamic>?;
+    if (cd != null) {
+      final cdShinies = (cd['shinies'] as List? ?? [])
+          .map((s) => (s['name'] as String?) ?? '')
+          .toSet();
+      for (final s in (cd['spawns'] as List? ?? [])) {
+        spawns.add(EventSpawn(
+          name: s['name'] ?? '',
+          image: s['image'] ?? '',
+          canBeShiny: cdShinies.contains(s['name'] ?? ''),
+        ));
+      }
+    }
+
+    // Raid battle bosses
+    final rb = extraData['raidbattles'] as Map<String, dynamic>?;
+    if (rb != null) {
+      for (final b in (rb['bosses'] as List? ?? [])) {
+        spawns.add(EventSpawn(
+          name: b['name'] ?? '',
+          image: b['image'] ?? '',
+          canBeShiny: b['canBeShiny'] ?? false,
+        ));
+      }
+    }
+
     return PogoEvent(
       eventId: json['eventID'] ?? '',
       name: json['name'] ?? '',
@@ -153,6 +190,8 @@ class PogoEvent {
       image: json['image'] ?? '',
       start: json['start'] != null ? DateTime.tryParse(json['start']) : null,
       end: json['end'] != null ? DateTime.tryParse(json['end']) : null,
+      hasSpawns: hasSpawns,
+      eventSpawns: spawns,
     );
   }
 
@@ -335,4 +374,16 @@ class RocketPokemon {
       canBeShiny: json['canBeShiny'] ?? false,
     );
   }
+}
+
+class EventSpawn {
+  final String name;
+  final String image;
+  final bool canBeShiny;
+
+  const EventSpawn({
+    required this.name,
+    required this.image,
+    required this.canBeShiny,
+  });
 }
