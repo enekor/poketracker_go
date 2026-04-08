@@ -378,7 +378,7 @@ class PokemonSearchBar extends StatelessWidget {
   }
 }
 
-/// Normal / Shiny tab indicator.
+/// Variant tab indicator (Normal, Shiny, Shadow, Purified, Shadow Shiny, Purified Shiny).
 class NormalShinyIndicator extends StatelessWidget {
   final int currentPage;
   final ValueChanged<int> onTap;
@@ -389,61 +389,67 @@ class NormalShinyIndicator extends StatelessWidget {
     required this.onTap,
   });
 
+  static const _tabs = [
+    (icon: Icons.catching_pokemon, secondIcon: null, color: Color(0xFFE53935)),
+    (icon: Icons.auto_awesome, secondIcon: null, color: Color(0xFFFFC107)),
+    (icon: Icons.cloud_rounded, secondIcon: null, color: Color(0xFF6A1B9A)),
+    (icon: Icons.favorite_rounded, secondIcon: null, color: Color(0xFF00897B)),
+    (icon: Icons.cloud_rounded, secondIcon: Icons.auto_awesome, color: Color(0xFF6A1B9A)),
+    (icon: Icons.favorite_rounded, secondIcon: Icons.auto_awesome, color: Color(0xFF00897B)),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildTab(context, 'NORMAL', 0, theme),
-          const SizedBox(width: 48),
-          _buildTab(context, 'SHINY', 1, theme),
-        ],
-      ),
-    );
-  }
+    return SizedBox(
+      height: 52,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: _tabs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final isActive = currentPage == index;
+          final tab = _tabs[index];
+          final activeColor = tab.color;
+          final inactiveColor = theme.colorScheme.onSurface.withOpacity(0.35);
 
-  Widget _buildTab(BuildContext context, String label, int index, ThemeData theme) {
-    final isActive = currentPage == index;
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              letterSpacing: 1.2,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-              color: isActive
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.5),
+          return GestureDetector(
+            onTap: () => onTap(index),
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? activeColor.withOpacity(0.12)
+                    : theme.colorScheme.onSurface.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(20),
+                border: isActive
+                    ? Border.all(color: activeColor.withOpacity(0.5), width: 1.5)
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    tab.icon,
+                    size: 20,
+                    color: isActive ? activeColor : inactiveColor,
+                  ),
+                  if (tab.secondIcon != null) ...[
+                    const SizedBox(width: 2),
+                    Icon(
+                      tab.secondIcon!,
+                      size: 14,
+                      color: isActive ? const Color(0xFFFFC107) : inactiveColor,
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            height: 3,
-            width: 32,
-            decoration: BoxDecoration(
-              color: isActive ? theme.colorScheme.secondary : Colors.transparent,
-              borderRadius: BorderRadius.circular(2),
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: theme.colorScheme.secondary.withOpacity(0.4),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      )
-                    ]
-                  : null,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

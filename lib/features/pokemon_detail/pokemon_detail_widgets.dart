@@ -136,52 +136,54 @@ class TypeChip extends StatelessWidget {
   }
 }
 
-/// Normal / Shiny toggle — only unlocked options are tappable.
+/// Ownership toggle — supports Normal, Shiny, Shadow, Purified, Shadow Shiny, Purified Shiny.
 class OwnershipToggle extends StatelessWidget {
-  final bool hasNormal;
-  final bool hasShiny;
-  final bool showShiny;
-  final VoidCallback? onNormal;
-  final VoidCallback? onShiny;
+  final Map<int, bool> variants; // page index -> has variant
+  final int activeVariant; // currently displayed variant
+  final ValueChanged<int> onVariantTap;
 
   const OwnershipToggle({
     super.key,
-    required this.hasNormal,
-    required this.hasShiny,
-    required this.showShiny,
-    this.onNormal,
-    this.onShiny,
+    required this.variants,
+    required this.activeVariant,
+    required this.onVariantTap,
   });
+
+  static const _variantInfo = [
+    (label: 'Normal', icon: Icons.catching_pokemon),
+    (label: 'Shiny', icon: Icons.auto_awesome),
+    (label: 'Oscuro', icon: Icons.cloud_rounded),
+    (label: 'Purif.', icon: Icons.favorite_rounded),
+    (label: 'Osc. ✨', icon: Icons.cloud_rounded),
+    (label: 'Pur. ✨', icon: Icons.favorite_rounded),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildChip(
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: List.generate(_variantInfo.length, (i) {
+        final info = _variantInfo[i];
+        final isOwned = variants[i] ?? false;
+        final isActive = activeVariant == i;
+        return _buildChip(
           context,
-          label: 'Normal',
-          isActive: !showShiny,
-          isLocked: !hasNormal,
-          onTap: onNormal,
-        ),
-        const SizedBox(width: 12),
-        _buildChip(
-          context,
-          label: 'Shiny',
-          icon: Icons.auto_awesome,
-          isActive: showShiny,
-          isLocked: !hasShiny,
-          onTap: onShiny,
-        ),
-      ],
+          label: info.label,
+          icon: info.icon,
+          isActive: isActive,
+          isLocked: !isOwned,
+          onTap: isOwned ? () => onVariantTap(i) : null,
+        );
+      }),
     );
   }
 
   Widget _buildChip(
     BuildContext context, {
     required String label,
-    IconData? icon,
+    required IconData icon,
     required bool isActive,
     required bool isLocked,
     VoidCallback? onTap,
@@ -206,7 +208,7 @@ class OwnershipToggle extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
@@ -216,15 +218,15 @@ class OwnershipToggle extends StatelessWidget {
           children: [
             if (isLocked) ...[
               Icon(Icons.lock_outline, size: 14, color: fgColor),
-              const SizedBox(width: 6),
-            ] else if (icon != null) ...[
+              const SizedBox(width: 4),
+            ] else ...[
               Icon(icon, size: 14, color: fgColor),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
             ],
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                 color: fgColor,
               ),

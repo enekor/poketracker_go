@@ -30,15 +30,26 @@ class PokedexSelectorService extends PokedexBaseService {
     final userData = hiveService.getAllUserPokemon();
     final map = <int, bool>{};
     for (final p in allPokemon) {
-      final userEntry = userData[p.id];
-      map[p.id] = currentPage.value == 1
-          ? (userEntry?.hasShiny ?? false)
-          : (userEntry?.hasNormal ?? false);
+      final u = userData[p.id];
+      map[p.id] = _getVariant(u, currentPage.value);
     }
     selection.assignAll(map);
     _originalSelection
       ..clear()
       ..addAll(map);
+  }
+
+  static bool _getVariant(UserPokemonModel? u, int page) {
+    if (u == null) return false;
+    switch (page) {
+      case 0: return u.hasNormal;
+      case 1: return u.hasShiny;
+      case 2: return u.hasShadow;
+      case 3: return u.hasPurified;
+      case 4: return u.hasShadowShiny;
+      case 5: return u.hasPurifiedShiny;
+      default: return false;
+    }
   }
 
   void toggleMode(int newMode) {
@@ -58,7 +69,6 @@ class PokedexSelectorService extends PokedexBaseService {
     final start = genData['start'] as int;
     final end = genData['end'] as int;
 
-    // Check if all are already selected in this range
     bool allSelected = true;
     for (int i = start; i <= end; i++) {
         if (selection[i] != true) {
@@ -67,7 +77,6 @@ class PokedexSelectorService extends PokedexBaseService {
         }
     }
 
-    // Toggle all
     final targetValue = !allSelected;
     for (int i = start; i <= end; i++) {
         selection[i] = targetValue;
@@ -87,14 +96,18 @@ class PokedexSelectorService extends PokedexBaseService {
   }
 
   Future<void> saveSelection() async {
-    final isShiny = currentPage.value == 1;
+    final page = currentPage.value;
     final models = <UserPokemonModel>[];
     for (final entry in selection.entries) {
       final existing = hiveService.getUserPokemon(entry.key);
       models.add(UserPokemonModel(
         pokemonId: entry.key,
-        hasNormal: isShiny ? (existing?.hasNormal ?? false) : entry.value,
-        hasShiny: isShiny ? entry.value : (existing?.hasShiny ?? false),
+        hasNormal: page == 0 ? entry.value : (existing?.hasNormal ?? false),
+        hasShiny: page == 1 ? entry.value : (existing?.hasShiny ?? false),
+        hasShadow: page == 2 ? entry.value : (existing?.hasShadow ?? false),
+        hasPurified: page == 3 ? entry.value : (existing?.hasPurified ?? false),
+        hasShadowShiny: page == 4 ? entry.value : (existing?.hasShadowShiny ?? false),
+        hasPurifiedShiny: page == 5 ? entry.value : (existing?.hasPurifiedShiny ?? false),
       ));
     }
     await hiveService.saveAllUserPokemon(models);

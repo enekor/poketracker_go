@@ -13,7 +13,7 @@ class PokemonDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = Get.put(PokemonDetailService());
-    final showShiny = false.obs;
+    final activeVariant = 0.obs; // 0=Normal,1=Shiny,2=Shadow,3=Purified,4=ShadowShiny,5=PurifiedShiny
     final showFemale = false.obs;
 
     return Scaffold(
@@ -37,23 +37,25 @@ class PokemonDetailScreen extends StatelessWidget {
             final spriteCtrl = Get.find<SpriteStyleController>();
             final isPixelArt = spriteCtrl.usePixelArt.value;
             final hasGender = service.hasFemaleSprite.value;
+            final variant = activeVariant.value;
+            final isShinyVariant = variant == 1 || variant == 4 || variant == 5;
 
             // Compute sprite URL
             String spriteUrl;
             if (showFemale.value) {
               if (isPixelArt) {
-                spriteUrl = showShiny.value
+                spriteUrl = isShinyVariant
                     ? (pokemon.spriteShinyFemaleUrl ?? pokemon.spriteShinyUrl)
                     : (pokemon.spriteFemaleUrl ?? pokemon.spriteUrl);
               } else {
-                spriteUrl = showShiny.value
+                spriteUrl = isShinyVariant
                     ? (pokemon.spriteHomeShinyFemaleUrl ??
                         spriteCtrl.spriteShinyUrl(pokemon.id))
                     : (pokemon.spriteHomeFemaleUrl ??
                         spriteCtrl.spriteUrl(pokemon.id));
               }
             } else {
-              spriteUrl = showShiny.value
+              spriteUrl = isShinyVariant
                   ? spriteCtrl.spriteShinyUrl(pokemon.id)
                   : spriteCtrl.spriteUrl(pokemon.id);
             }
@@ -94,18 +96,19 @@ class PokemonDetailScreen extends StatelessWidget {
                   ),
                 ],
 
-                // 5. Normal / Shiny selector (only unlocked ones are selectable)
+                // 5. Variant selector (only unlocked ones are selectable)
                 const SizedBox(height: 24),
                 OwnershipToggle(
-                  hasNormal: service.hasNormal.value,
-                  hasShiny: service.hasShiny.value,
-                  showShiny: showShiny.value,
-                  onNormal: service.hasNormal.value
-                      ? () => showShiny.value = false
-                      : null,
-                  onShiny: service.hasShiny.value
-                      ? () => showShiny.value = true
-                      : null,
+                  variants: {
+                    0: service.hasNormal.value,
+                    1: service.hasShiny.value,
+                    2: service.hasShadow.value,
+                    3: service.hasPurified.value,
+                    4: service.hasShadowShiny.value,
+                    5: service.hasPurifiedShiny.value,
+                  },
+                  activeVariant: activeVariant.value,
+                  onVariantTap: (v) => activeVariant.value = v,
                 ),
 
                 // 6. Evolution chain

@@ -14,6 +14,8 @@ class HomeService extends GetxController {
 
   final RxInt totalOwned = 0.obs;
   final RxInt totalShiny = 0.obs;
+  final RxInt totalShadow = 0.obs;
+  final RxInt totalPurified = 0.obs;
   final int totalPokemon = ApiConstants.totalPokemon;
 
   final activeEvents = <PogoEvent>[].obs;
@@ -32,12 +34,18 @@ class HomeService extends GetxController {
     final allUserPokemon = _hiveService.getAllUserPokemon();
     int normal = 0;
     int shiny = 0;
+    int shadow = 0;
+    int purified = 0;
     for (final entry in allUserPokemon.values) {
       if (entry.hasNormal) normal++;
       if (entry.hasShiny) shiny++;
+      if (entry.hasShadow || entry.hasShadowShiny) shadow++;
+      if (entry.hasPurified || entry.hasPurifiedShiny) purified++;
     }
     totalOwned.value = normal;
     totalShiny.value = shiny;
+    totalShadow.value = shadow;
+    totalPurified.value = purified;
   }
 
   Future<void> _loadAll() async {

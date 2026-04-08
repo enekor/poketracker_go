@@ -34,7 +34,7 @@ class PokedexScreen extends StatelessWidget {
       body: Obx(() {
         return Column(
           children: [
-            // Normal / Shiny toggle
+            // Variant toggle tabs
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: NormalShinyIndicator(
@@ -42,7 +42,8 @@ class PokedexScreen extends StatelessWidget {
                 onTap: isSelectMode
                     ? (service as PokedexSelectorService).toggleMode
                     : (page) {
-                        (service as PokedexService).pageController.animateToPage(
+                        final svc = service as PokedexService;
+                        svc.pageController.animateToPage(
                           page,
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
@@ -85,26 +86,23 @@ class PokedexScreen extends StatelessWidget {
     return PageView(
       controller: service.pageController,
       onPageChanged: service.onPageChanged,
-      children: [
-        _buildViewGrid(service, isShiny: false),
-        _buildViewGrid(service, isShiny: true),
-      ],
+      children: List.generate(PokedexService.pageCount, (page) =>
+        _buildViewGrid(service, page: page),
+      ),
     );
   }
 
-  Widget _buildViewGrid(PokedexService service, {required bool isShiny}) {
+  Widget _buildViewGrid(PokedexService service, {required int page}) {
     final groups = service.pokemonByGeneration;
-    final scrollController =
-        isShiny ? service.shinyScrollController : service.normalScrollController;
+    final isShiny = page == 1 || page == 4 || page == 5;
 
     return CustomScrollView(
-      controller: scrollController,
+      controller: service.scrollControllers[page],
       slivers: _buildGridSlivers(
         groups: groups,
         tileBuilder: (pokemon) => PokemonGridTile(
           pokemon: pokemon,
-          isOwned:
-              isShiny ? service.hasShiny(pokemon.id) : service.hasNormal(pokemon.id),
+          isOwned: service.hasVariant(pokemon.id, page),
           isShiny: isShiny,
           onTap: () => Get.toNamed(AppRoutes.pokemonDetail, arguments: pokemon),
         ),
@@ -116,7 +114,8 @@ class PokedexScreen extends StatelessWidget {
 
   Widget _buildSelectGrid(PokedexSelectorService service) {
     final groups = service.pokemonByGeneration;
-    final isShiny = service.currentPage.value == 1;
+    final page = service.currentPage.value;
+    final isShiny = page == 1 || page == 4 || page == 5;
 
     return CustomScrollView(
       slivers: _buildGridSlivers(

@@ -14,6 +14,10 @@ class PokemonDetailService extends GetxController {
   final RxBool isLoading = true.obs;
   final RxBool hasNormal = false.obs;
   final RxBool hasShiny = false.obs;
+  final RxBool hasShadow = false.obs;
+  final RxBool hasPurified = false.obs;
+  final RxBool hasShadowShiny = false.obs;
+  final RxBool hasPurifiedShiny = false.obs;
   final RxBool hasFemaleSprite = false.obs;
   final RxList<List<EvolutionEntry>> evolutionChain =
       <List<EvolutionEntry>>[].obs;
@@ -51,6 +55,10 @@ class PokemonDetailService extends GetxController {
       final userEntry = _hiveService.getUserPokemon(basicPokemon.id);
       hasNormal.value = userEntry?.hasNormal ?? false;
       hasShiny.value = userEntry?.hasShiny ?? false;
+      hasShadow.value = userEntry?.hasShadow ?? false;
+      hasPurified.value = userEntry?.hasPurified ?? false;
+      hasShadowShiny.value = userEntry?.hasShadowShiny ?? false;
+      hasPurifiedShiny.value = userEntry?.hasPurifiedShiny ?? false;
     } catch (e) {
       // Fallback to basic data
       pokemon.value = basicPokemon;

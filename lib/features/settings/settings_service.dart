@@ -26,6 +26,10 @@ class SettingsService extends GetxController {
                 'id': m.pokemonId,
                 'n': m.hasNormal,
                 's': m.hasShiny,
+                'sh': m.hasShadow,
+                'p': m.hasPurified,
+                'ss': m.hasShadowShiny,
+                'ps': m.hasPurifiedShiny,
               })
           .toList();
 
@@ -63,8 +67,12 @@ class SettingsService extends GetxController {
       for (final item in data) {
         models.add(UserPokemonModel(
           pokemonId: item['id'] as int,
-          hasNormal: item['n'] as bool,
-          hasShiny: item['s'] as bool,
+          hasNormal: item['n'] as bool? ?? false,
+          hasShiny: item['s'] as bool? ?? false,
+          hasShadow: item['sh'] as bool? ?? false,
+          hasPurified: item['p'] as bool? ?? false,
+          hasShadowShiny: item['ss'] as bool? ?? false,
+          hasPurifiedShiny: item['ps'] as bool? ?? false,
         ));
       }
 

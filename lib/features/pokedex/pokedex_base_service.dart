@@ -14,7 +14,8 @@ abstract class PokedexBaseService extends GetxController {
 
   final RxList<PokemonModel> allPokemon = <PokemonModel>[].obs;
   final RxBool isLoading = true.obs;
-  final RxInt currentPage = 0.obs; // 0 = Normal, 1 = Shiny
+  // 0=Normal, 1=Shiny, 2=Shadow, 3=Purified, 4=Shadow Shiny, 5=Purified Shiny
+  final RxInt currentPage = 0.obs;
   final RxString searchQuery = ''.obs;
   final RxInt selectedGeneration = 0.obs;
   final RxInt ownershipFilter = 0.obs;
