@@ -563,22 +563,43 @@ class VariantAura extends StatelessWidget {
 
     final auraColor = isShadow
         ? const Color(0xFF6A1B9A)
-        : const Color(0xFF90CAF9);
+        : const Color(0xFF64B5F6);
 
     return Stack(
       alignment: Alignment.center,
+      clipBehavior: Clip.none,
       children: [
+        // Outer glow (bleeds outside bounds for impact)
+        Positioned(
+          left: -8,
+          right: -8,
+          top: -8,
+          bottom: -8,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: auraColor.withOpacity(0.55),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Inner radial gradient
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  auraColor.withOpacity(0.35),
-                  auraColor.withOpacity(0.12),
+                  auraColor.withOpacity(0.50),
+                  auraColor.withOpacity(0.20),
                   auraColor.withOpacity(0.0),
                 ],
-                stops: const [0.0, 0.5, 1.0],
+                stops: const [0.0, 0.55, 1.0],
               ),
             ),
           ),

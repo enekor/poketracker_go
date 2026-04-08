@@ -31,7 +31,7 @@ class PokemonSpriteViewer extends StatelessWidget {
     final auraColor = isShadow
         ? const Color(0xFF6A1B9A)
         : isPurified
-            ? const Color(0xFF90CAF9)
+            ? const Color(0xFF64B5F6)
             : null;
 
     return SizedBox(
@@ -40,22 +40,43 @@ class PokemonSpriteViewer extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          if (auraColor != null)
+          if (auraColor != null) ...[
+            // Outer soft glow
+            Positioned(
+              left: -20,
+              right: -20,
+              top: -20,
+              bottom: -20,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: auraColor.withOpacity(0.5),
+                      blurRadius: 60,
+                      spreadRadius: 10,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Inner radial gradient
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      auraColor.withOpacity(0.30),
-                      auraColor.withOpacity(0.10),
+                      auraColor.withOpacity(0.50),
+                      auraColor.withOpacity(0.25),
                       auraColor.withOpacity(0.0),
                     ],
-                    stops: const [0.0, 0.45, 1.0],
+                    stops: const [0.0, 0.5, 1.0],
                   ),
                 ),
               ),
             ),
+          ],
           CachedNetworkImage(
             imageUrl: spriteUrl,
             fit: BoxFit.contain,

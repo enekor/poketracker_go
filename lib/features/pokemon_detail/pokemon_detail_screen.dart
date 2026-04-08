@@ -120,7 +120,7 @@ class PokemonDetailScreen extends StatelessWidget {
                     stages: service.evolutionChain,
                     currentPokemonId: pokemon.id,
                     onTap: (entry) {
-                      showShiny.value = false;
+                      activeVariant.value = 0;
                       showFemale.value = false;
                       service.loadPokemon(entry.id, entry.name);
                     },
