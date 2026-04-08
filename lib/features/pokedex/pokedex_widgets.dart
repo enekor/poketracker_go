@@ -14,6 +14,8 @@ class PokemonGridTile extends StatefulWidget {
   final PokemonModel pokemon;
   final bool isOwned;
   final bool isShiny;
+  /// 0=Normal,1=Shiny,2=Shadow,3=Purified,4=ShadowShiny,5=PurifiedShiny
+  final int variant;
   final VoidCallback? onTap;
 
   const PokemonGridTile({
@@ -21,6 +23,7 @@ class PokemonGridTile extends StatefulWidget {
     required this.pokemon,
     required this.isOwned,
     this.isShiny = false,
+    this.variant = 0,
     this.onTap,
   });
 
@@ -105,24 +108,27 @@ class _PokemonGridTileState extends State<PokemonGridTile> with SingleTickerProv
                       ),
                       Padding(
                         padding: const EdgeInsets.all(12),
-                        child: ColorFiltered(
-                          colorFilter: widget.isOwned
-                              ? const ColorFilter.mode(Colors.transparent, BlendMode.dst)
-                              : ImageUtils.greyscaleFilter(context),
-                          child: CachedNetworkImage(
-                            imageUrl: spriteUrl,
-                            placeholder: (_, __) => Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: theme.colorScheme.primary.withOpacity(0.2),
+                        child: VariantAura(
+                          variant: widget.variant,
+                          child: ColorFiltered(
+                            colorFilter: widget.isOwned
+                                ? const ColorFilter.mode(Colors.transparent, BlendMode.dst)
+                                : ImageUtils.greyscaleFilter(context),
+                            child: CachedNetworkImage(
+                              imageUrl: spriteUrl,
+                              placeholder: (_, __) => Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: theme.colorScheme.primary.withOpacity(0.2),
+                                  ),
                                 ),
                               ),
+                              errorWidget: (_, __, ___) => const Icon(Icons.error_outline, size: 20),
+                              fit: BoxFit.contain,
                             ),
-                            errorWidget: (_, __, ___) => const Icon(Icons.error_outline, size: 20),
-                            fit: BoxFit.contain,
                           ),
                         ),
                       ),
@@ -535,6 +541,50 @@ class SelectablePokemonTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Wraps a sprite with a colored radial aura for shadow / purified variants.
+class VariantAura extends StatelessWidget {
+  final int variant;
+  final Widget child;
+
+  const VariantAura({super.key, required this.variant, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    // 2=Shadow, 4=ShadowShiny → purple aura
+    // 3=Purified, 5=PurifiedShiny → white/light aura
+    final isShadow = variant == 2 || variant == 4;
+    final isPurified = variant == 3 || variant == 5;
+
+    if (!isShadow && !isPurified) return child;
+
+    final auraColor = isShadow
+        ? const Color(0xFF6A1B9A)
+        : const Color(0xFF90CAF9);
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  auraColor.withOpacity(0.35),
+                  auraColor.withOpacity(0.12),
+                  auraColor.withOpacity(0.0),
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
+        ),
+        child,
+      ],
     );
   }
 }

@@ -66,6 +66,7 @@ class PokemonDetailScreen extends StatelessWidget {
                 PokemonSpriteViewer(
                   spriteUrl: spriteUrl,
                   usePixelArt: isPixelArt,
+                  variant: variant,
                 ),
 
                 // 2. Gender selector (only if gender difference exists)

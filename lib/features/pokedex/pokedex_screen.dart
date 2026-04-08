@@ -104,6 +104,7 @@ class PokedexScreen extends StatelessWidget {
           pokemon: pokemon,
           isOwned: service.hasVariant(pokemon.id, page),
           isShiny: isShiny,
+          variant: page,
           onTap: () => Get.toNamed(AppRoutes.pokemonDetail, arguments: pokemon),
         ),
       ),

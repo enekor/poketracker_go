@@ -6,15 +6,18 @@ import 'package:poketracker_go/app/theme/sprite_style_controller.dart';
 import 'package:poketracker_go/core/services/api_service.dart';
 import 'package:get/get.dart';
 
-/// Large sprite display.
+/// Large sprite display with optional variant aura.
 class PokemonSpriteViewer extends StatelessWidget {
   final String spriteUrl;
   final bool usePixelArt;
+  /// 0=Normal,1=Shiny,2=Shadow,3=Purified,4=ShadowShiny,5=PurifiedShiny
+  final int variant;
 
   const PokemonSpriteViewer({
     super.key,
     required this.spriteUrl,
     this.usePixelArt = true,
+    this.variant = 0,
   });
 
   @override
@@ -22,17 +25,47 @@ class PokemonSpriteViewer extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final spriteSize = screenWidth * 0.65;
 
+    final isShadow = variant == 2 || variant == 4;
+    final isPurified = variant == 3 || variant == 5;
+
+    final auraColor = isShadow
+        ? const Color(0xFF6A1B9A)
+        : isPurified
+            ? const Color(0xFF90CAF9)
+            : null;
+
     return SizedBox(
       height: spriteSize,
       width: spriteSize,
-      child: CachedNetworkImage(
-        imageUrl: spriteUrl,
-        fit: BoxFit.contain,
-        filterQuality: usePixelArt ? FilterQuality.none : FilterQuality.low,
-        placeholder: (_, __) =>
-            const Center(child: CircularProgressIndicator()),
-        errorWidget: (_, __, ___) =>
-            const Icon(Icons.error_outline, size: 64),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (auraColor != null)
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      auraColor.withOpacity(0.30),
+                      auraColor.withOpacity(0.10),
+                      auraColor.withOpacity(0.0),
+                    ],
+                    stops: const [0.0, 0.45, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          CachedNetworkImage(
+            imageUrl: spriteUrl,
+            fit: BoxFit.contain,
+            filterQuality: usePixelArt ? FilterQuality.none : FilterQuality.low,
+            placeholder: (_, __) =>
+                const Center(child: CircularProgressIndicator()),
+            errorWidget: (_, __, ___) =>
+                const Icon(Icons.error_outline, size: 64),
+          ),
+        ],
       ),
     );
   }
